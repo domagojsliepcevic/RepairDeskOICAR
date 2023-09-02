@@ -1,0 +1,65 @@
+﻿@inject JwtHandler jwtHandler
+@inject AuthenticationStateProvider authStateProvider
+
+<ul class="header-links pull-right">
+@if (!isLoggedIn)
+{
+    <li>
+        <NavLink href="/login" title="Login"><i class="fa fa-user-o" aria-hidden="true"></i></NavLink>
+    </li>
+    <li>
+        <NavLink href="/registration" title="Register"><i class="fa fa-user-plus" aria-hidden="true"></i></NavLink>
+    </li>
+}
+else
+{
+    <li>
+        <NavLink href="/account" title="Account"><i class="fa fa-user-plus" aria-hidden="true"></i></NavLink>
+    </li>
+}
+@if (isAdmin)
+{
+    <li>
+        <NavLink href="/admin" title="Admin">Admin</NavLink>
+    </li>
+}
+@if (isLoggedIn)
+{
+    <li>
+        <NavLink href="/" @onclick="@Logout" title="Logout">
+            <i class="fa fa-sign-out" aria-hidden="true"></i>
+        </NavLink>
+    </li>
+}
+</ul>
+
+
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private bool isLoggedIn { get; set; }
+    private bool isAdmin { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (principal.Identity.IsAuthenticated)
+            {
+                isLoggedIn = true;
+                isAdmin = principal.HasRole("admin");
+            }
+        }
+        catch { }
+    }
+    private async Task Logout()
+    {
+        await jwtHandler.RemoveJwtToken();
+        isAdmin = false;
+        isLoggedIn = false;
+    }
+
+}

@@ -1,0 +1,21 @@
+﻿@if (Data != null)
+{
+    <EditForm Model="Data" OnValidSubmit="@OnSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="password">Confirm with password:</label>
+            <InputText id="password" type="password" class="form-control" @bind-Value="Data.Password" />
+            <ValidationMessage For="@(() => Data.Password)" />
+        </div>
+        <button style="submit" class="primary-btn order-submit">Close Account</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public CloseAccountModel Data { get; set; }
+    [Parameter, EditorRequired]
+    public Func<Task> OnSubmit { get; set; }
+}
+

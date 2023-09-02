@@ -1,0 +1,65 @@
+﻿@page "/user/profile/orders/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+
+<h3>Order Details</h3>
+
+@if (order == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <p>Order ID: @order.Id</p>
+    <p>Date: @order.OrderDate.ToString("d")</p>
+    <p>Total Price: @order.TotalAmount.ToString("C")</p>
+    <p>Status: @order.Status</p>
+
+    <h4>Order Items:</h4>
+    <ul>
+        @foreach (var item in order.OrderItems)
+        {
+            <li>@item.Product: @item.Quantity (@item.UnitPrice.ToString("C") each)</li>
+        }
+    </ul>
+    <button class="btn btn-primary" @onclick="BackToList">Back to List</button>
+}
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private ClaimsPrincipal principal { get; set; }
+
+    private OrderDetailsModel order = null;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                order = await httpClient.GetOrderAsync(id);
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void BackToList()
+    {
+        navMan.NavigateTo("/user/profile/orders");
+    }
+
+}

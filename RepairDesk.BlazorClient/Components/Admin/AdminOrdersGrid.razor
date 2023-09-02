@@ -1,0 +1,42 @@
+﻿<table class="admin table table-striped">
+@if (PagedData != null && !PagedData.Items.IsNullOrEmpty())
+{
+    <thead>
+        <tr>
+            <th class="text-right">#</th>
+            <th class="text-right">Order Date</th>
+            <th class="text-right">Total Amount</th>
+            <th>User</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in PagedData.Items)
+    {
+        <tr>
+            <td class="text-right"><NavLink href="@($"/admin/orders/{item.Id}")">@item.Id</NavLink></td>
+            <td class="text-right">@item.OrderDate.DateTime.ToString("dd-MM-yyyy")</td>
+            <td class="text-right">@item.TotalAmount.ToString("#,##0.00") €</td>
+            <td>@item.User</td>
+            <td>@item.Status</td>
+        </tr>
+    }
+    </tbody>
+}
+else
+{
+    <thead>
+        <tr>
+            <th class="text-center">No Data</th>
+        </tr>
+    </thead>
+}
+</table>
+
+
+@code {
+    [Parameter, EditorRequired]
+    public OrderListModelPagedResult PagedData { get; set; }
+
+
+}

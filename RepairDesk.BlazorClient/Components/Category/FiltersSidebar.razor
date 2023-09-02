@@ -1,0 +1,103 @@
+﻿@using System.Globalization;
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject ProductSearchService searchService
+@inject NavigationManager navMan
+
+ <EditForm Model="searchService" OnValidSubmit="Search">
+	@if (pagedResult != null)
+	{
+		<div class="aside">
+			<h3 class="aside-title">Categories</h3>
+			<div class="radio-filter">
+				@if(!pagedResult.Items.IsNullOrEmpty())
+				{
+					<InputRadioGroup @bind-Value="searchService.CategoryId">
+						<div class="input-checkbox">
+							<InputRadio Value="0" /> All Categories
+						</div>
+						@if (!pagedResult.Items.IsNullOrEmpty())
+						{
+							@foreach (var category in pagedResult.Items.Where(c => !c.IsSpecial))
+							{
+							<div class="input-checkbox">
+								<InputRadio Value="@category.Id" /> @category.Name
+							</div>
+							}
+						}
+					</InputRadioGroup>
+				}
+			</div>
+		</div>
+	}
+	<div class="aside">
+		<h3 class="aside-title">Brand</h3>
+		<div class="checkbox-filter">
+			<div >
+			<InputText @bind-Value="searchService.Brand" class="input" />
+			</div>
+		</div>
+	</div>
+	<div class="aside">
+		<h3 class="aside-title">Price</h3>
+		<div class="price-filter">
+			<div id="price-slider"></div>
+			<div class="input-number price-min">
+				<InputNumber @bind-Value="searchService.PriceFrom" />
+			</div>
+			<span>-</span>
+			<div class="input-number price-max">
+				<InputNumber @bind-Value="searchService.PriceTo" />
+			</div>
+		</div>
+	</div>
+	<div class="aside">
+		<button type="submit" class="primary-btn">Search</button>
+		<button type="button" class="primary-btn" style="background-color: gray;" @onclick="ResetForm">Clear</button>
+	</div>
+</EditForm>
+
+
+@code {
+	private CategoryListModelPagedResult pagedResult;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadPage(1);
+	}
+
+	private async Task LoadPage(int pageNumber)
+	{
+		try
+		{
+			pagedResult = await httpClient.GetCategoriesPageAsync(pageNumber);
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+
+
+
+	private void ResetForm()
+	{
+		searchService.CategoryId = 0;
+		searchService.Brand = null;
+		searchService.Text = null;
+		searchService.PriceFrom = null;
+		searchService.PriceTo = null;
+	}
+
+	private void Search()
+	{
+		string categoryId = (searchService.CategoryId.HasValue && searchService.CategoryId>0) ? searchService.CategoryId.Value.ToString() : "";
+		string brand = !string.IsNullOrWhiteSpace(searchService.Brand) ? Uri.EscapeDataString(searchService.Brand) : "";
+		string priceFrom = searchService.PriceFrom.HasValue ? searchService.PriceFrom.Value.ToString("0.00", CultureInfo.InvariantCulture) : "";
+		string priceTo = searchService.PriceTo.HasValue ? searchService.PriceTo.Value.ToString("0.00", CultureInfo.InvariantCulture) : "";
+		string newUrl = $"/searchresults?categoryid={categoryId}&brand={brand}&pricefrom={priceFrom}&priceto={priceTo}";
+		searchService.Text = null;
+
+		navMan.NavigateTo(newUrl);
+	}
+}

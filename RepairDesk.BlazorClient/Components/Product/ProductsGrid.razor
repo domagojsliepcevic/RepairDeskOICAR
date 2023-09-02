@@ -1,0 +1,24 @@
+﻿<div class="row">
+@if(Products != null && !Products.IsNullOrEmpty())
+{
+    @foreach (var product in Products)
+    {
+		<div class="col-md-4 col-xs-6">
+            <ProductBox Product="@product" />
+        </div>
+	}
+}
+else
+{
+	<div class="col-md-12">
+		<p>No items found.</p>
+	</div>
+}
+</div>
+
+@code {
+	[Parameter, EditorRequired]
+	public ICollection<ProductListModel> Products { get; set; }
+
+
+}

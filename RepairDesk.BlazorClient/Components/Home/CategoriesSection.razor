@@ -1,0 +1,56 @@
+﻿@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+
+@if (pagedResult != null && !pagedResult.Items.IsNullOrEmpty())
+{
+    <!-- SECTION -->
+    <div class="section">
+        <div class="container">
+            <div class="row">
+                @if (pagedResult != null && !pagedResult.Items.IsNullOrEmpty())
+                {
+                    @foreach (var category in pagedResult.Items.Where(c => !c.IsSpecial))
+                    {
+                    <!-- shop -->
+                    <div class="col-md-4 col-xs-6">
+                        <div class="shop">
+                            <div class="shop-img">
+                                <img src="/pictures/@category.ImagePath" alt="">
+                            </div>
+                            <div class="shop-body">
+                                <h3>@category.Name</h3>
+                                <a href="/categories/@category.Id" class="cta-btn">
+                                    Shop now <i class="fa fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /shop -->
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <!-- /SECTION -->
+}
+
+@code {
+    private CategoryListModelPagedResult pagedResult;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPage(1);
+    }
+
+    private async Task LoadPage(int pageNumber)
+    {
+        try
+        {
+            pagedResult = await httpClient.GetCategoriesPageAsync(pageNumber);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+}

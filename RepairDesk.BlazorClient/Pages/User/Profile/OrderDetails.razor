@@ -1,0 +1,56 @@
+﻿@page "/orders/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+<MainHeader />
+<MainNavigation />
+
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <aside id="aside" class="col-md-3">
+                <ProfileMenu />
+            </aside>
+            <div class="col-md-9">
+                @if (orderData != null)
+                {
+                    <h3 class="title">Order Details (#@orderData.Id)</h3>
+                    <NavLink href="/orders" class="profile list-link">Orders List</NavLink>
+                    <OrderDetailsBox Data="@orderData" />
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<MainFooter />
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private ClaimsPrincipal principal { get; set; }
+    private OrderDetailsModel orderData = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                orderData = await httpClient.GetOrderForUserAsync(id);
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+}

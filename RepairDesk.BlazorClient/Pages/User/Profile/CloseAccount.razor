@@ -1,0 +1,70 @@
+﻿@page "/close"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+@inject JwtHandler jwtHandler
+
+<MainHeader />
+<MainNavigation />
+
+<section class="section">
+	<div class="container">
+		<div class="row">
+			<aside id="aside" class="col-md-3">
+				<ProfileMenu />
+			</aside>
+			<div class="col-md-9">
+                @if (model != null)
+                {
+                    <div class="row col-md-12">
+                        <h3>Close Account</h3>
+                    </div>
+                    <div class="row col-md-12" style="padding-top:2rem;">
+                        <h4>Are you sure you want to close your account?</h4>
+                    </div>
+                    <div class="row col-md-6" style="padding-top:2rem;">
+                        <CloseAccountBox Data="model" OnSubmit="OnSubmit" />
+                    </div>
+                }
+            </div>
+		</div>
+	</div>
+</section>
+
+<MainFooter />
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private CloseAccountModel model = new CloseAccountModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+    private async Task OnSubmit()
+    {
+        try
+        {
+            await httpClient.CloseAccountAsync(model);
+            await jwtHandler.RemoveJwtToken();
+            navMan.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+}

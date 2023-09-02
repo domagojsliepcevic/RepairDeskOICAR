@@ -1,0 +1,106 @@
+﻿@page "/user/profile/repairs"
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+
+
+<h3>Repairs</h3>
+
+@if (pagedResult == null)
+{
+    <p>Loading...</p>
+}
+else if (pagedResult.Items.IsNullOrEmpty())
+{
+    <p>You have no repairs.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Requested</th>
+                <th>Finished</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var repair in pagedResult.Items)
+            {
+                <tr>
+                    <td>@repair.Id</td>
+                    <td>@repair.RequestDate.ToString("d")</td>
+                    <td>@(repair.FinishDate.HasValue ? repair.FinishDate.Value.ToString("d") : "---")</td>
+                    <td>@repair.Status</td>
+                    <td><a href="@($"/user/profile/repairs/{repair.Id}")">Details</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button class="prev-btn" disabled="@IsFirstPage" @onclick="GoToPreviousPage">Previous</button>
+        <span class="page-info">Page @pagedResult.CurrentPage of @pagedResult.TotalPages</span>
+        <button class="next-btn" disabled="@IsLastPage" @onclick="GoToNextPage">Next</button>
+    </div>
+}
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private RepairListModelPagedResult pagedResult;
+    private bool IsFirstPage => pagedResult.CurrentPage == 1;
+    private bool IsLastPage => pagedResult.CurrentPage == pagedResult.TotalPages;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                await LoadPage(1);
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    /* pagination */
+    private async Task LoadPage(int pageNumber)
+    {
+        try
+        {
+            pagedResult = await httpClient.GetRepairsPageAsync(pageNumber);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            await LoadPage(pagedResult.CurrentPage - 1);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (!IsLastPage)
+        {
+            await LoadPage(pagedResult.CurrentPage + 1);
+        }
+    }
+}

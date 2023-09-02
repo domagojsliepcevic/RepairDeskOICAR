@@ -1,0 +1,63 @@
+﻿@page "/login"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject JwtHandler jwtHandler
+
+<MainHeader />
+<MainNavigation />
+
+<!-- registration section -->
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Login</h2>
+                <EditForm Model="login" OnValidSubmit="@OnSubmit">
+                    <DataAnnotationsValidator />
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <InputText id="email" class="form-control" @bind-Value="login.Email" />
+                        <ValidationMessage For="@(() => login.Email)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <InputText id="password" type="password" class="form-control" @bind-Value="login.Password" />
+                        <ValidationMessage For="@(() => login.Password)" />
+                    </div>
+                    <button type="submit" class="primary-btn cta-btn">Login</button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /registration section -->
+
+<MainFooter />
+
+
+@code {
+    private UserLoginModel login = new UserLoginModel();
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var token = await httpClient.UserLoginAsync(login);
+            //await localStorage.SetItemAsync("authToken", token.Token);
+            await jwtHandler.SetJwtToken(token.Token);
+
+            toastService.ShowSuccess("success");
+            GoHome();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void GoHome()
+    {
+        navMan.NavigateTo("/");
+    }
+}

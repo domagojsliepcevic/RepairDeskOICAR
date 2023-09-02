@@ -1,0 +1,77 @@
+﻿@page "/payment/success"
+@inject IRepairDeskApiClient httpClient
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject IConfiguration configuration
+
+<MainHeader />
+<MainNavigation />
+<div class="col-md-12 text-center" style="padding:100px;">
+    <h3>Payment was successful!</h3>
+	<h3><i class="fa fa-smile-o" aria-hidden="true"></i></h3>
+    <h4>Shop some more?</h4>
+    <NavLink href="/" class="primary-btn">Shop</NavLink>
+</div>
+<MainFooter />
+
+@code {
+	private ClaimsPrincipal principal { get; set; }
+	private CartItemListModelPagedResult pagedData;
+	private CartHeadModel cartHeadData;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var authState = await authStateProvider.GetAuthenticationStateAsync();
+			principal = authState.User;
+			if (!principal.Identity.IsAuthenticated)
+			{
+				navMan.NavigateTo("/login");
+			}
+			else
+			{
+				await LoadPage(1);
+			}
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+
+	private async Task LoadPage(int pageNumber)
+	{
+		try
+		{
+			pagedData = await httpClient.GetCartItemsPageAsync(pageNumber);
+			cartHeadData = await httpClient.GetCartHeadAsync();
+			if (cartHeadData != null && cartHeadData.Total > 0)
+            {
+				OrderUserAddModel order = new OrderUserAddModel
+				{
+					OrderDate = DateTime.Now,
+					PaymentMethod = "stripe",
+					PosId = 1, // todo
+					OrderItems = pagedData.Items.Select(x => new OrderItemAddModel
+					{
+						ProductId = x.ProductId,
+						Quantity = x.Quantity
+					}).ToList()
+				};
+				// place order in system
+				var odm = await httpClient.UserAddOrderAsync(order);
+				// clear cart
+				await httpClient.ClearCartAsync();
+			}
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+
+
+
+}

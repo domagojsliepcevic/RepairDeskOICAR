@@ -1,0 +1,53 @@
+﻿@page "/user/login"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@*@inject ILocalStorageService localStorage*@
+@inject JwtHandler jwtHandler
+
+<h3>Login</h3>
+
+<EditForm Model="login" OnValidSubmit="@OnSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <InputText id="email" class="form-control" @bind-Value="login.Email" />
+        <ValidationMessage For="@(() => login.Email)" />
+
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="login.Password" />
+        <ValidationMessage For="@(() => login.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+@code {
+    private UserLoginModel login = new UserLoginModel();
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var token = await httpClient.UserLoginAsync(login);
+            //await localStorage.SetItemAsync("authToken", token.Token);
+            await jwtHandler.SetJwtToken(token.Token);
+
+            toastService.ShowSuccess("success");
+            GoHome();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void GoHome()
+    {
+        navMan.NavigateTo("/");
+    }
+}

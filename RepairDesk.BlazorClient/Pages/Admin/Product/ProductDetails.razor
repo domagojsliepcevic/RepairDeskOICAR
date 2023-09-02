@@ -1,0 +1,95 @@
+﻿@page "/admin/products/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+<div class="container-fluid">
+    <div class="row">
+        <AdminHeader />
+    </div>
+    <div class="row">
+        @if (isAdmin)
+        {
+        <div class="col-md-2">
+            <AdminNav />
+        </div>
+        <div class="col-md-10">
+            <div class="row col-md-6" style="margin-top:1rem;">
+                <h3>Product Details</h3>
+                <NavLink href="/admin/products" class="admin list-link">Product List</NavLink>
+                <AdminProductEditForm Data="@productData" Product="@product" CategoriesData="@categoriesData" OnSubmit="@OnSubmit" />
+            </div>
+        </div>
+        }
+        else
+        {
+            <Unauthorized />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+    private int categoriesPageNr = 1;
+    private ProductDetailsModel productData = null;
+    private ProductEditModel product = new ProductEditModel();
+    private CategoryListModelPagedResult categoriesData = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    categoriesData = await httpClient.GetCategoriesPageAsync(categoriesPageNr); // todo load data
+                    productData = await httpClient.GetProductAsync(id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var data = await httpClient.EditProductAsync(id, product);
+            if (data != null)
+            {
+                // todo
+                toastService.ShowSuccess("success");
+                GoToList();
+            }
+            else
+            {
+                // todo
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void GoToList()
+    {
+        navMan.NavigateTo("/admin/products");
+    }
+}

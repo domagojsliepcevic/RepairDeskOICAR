@@ -1,0 +1,79 @@
+﻿@inject IWebHostEnvironment Environment
+@using System.IO
+
+<EditForm Model="@Category" OnValidSubmit="@OnSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" class="form-control" @bind-Value="Category.Name" />
+        <ValidationMessage For="@(() => Category.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <InputTextArea id="description" class="form-control" @bind-Value="Category.Description" />
+        <ValidationMessage For="@(() => Category.Description)" />
+    </div>
+
+    <div class="form-group">
+        <div class="form-check">
+            <label class="form-check-label" for="exampleCheck1">Is Special:</label>
+            &nbsp;<InputCheckbox class="form-check-input" id="special" @bind-Value="Category.IsSpecial" />
+        </div>
+        <ValidationMessage For="@(() => Category.IsSpecial)" />
+    </div>
+
+    <div class="form-group">
+        <label for="quantity">Image:</label>
+        <input type="hidden" @bind="Category.ImagePath" />
+        <InputFile id="flies" class="form-control" OnChange="@LoadFiles" />
+        <ValidationMessageEx For="@(() => Category.ImagePath)" ErrorMessage="Image is required." />
+        @if (loadedFiles != null && loadedFiles.Count > 0)
+        {
+            <img src="/pictures/@Category.ImagePath" alt="Preview" style="max-width:200px; max-height:200px;" />
+        }
+    </div>
+
+    <button type="submit" class=" primary-btn cta-btn">Save New</button>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public CategoryAddModel Category { get; set; }
+    [Parameter, EditorRequired]
+    public Func<Task> OnSubmit { get; set; }
+
+    private List<IBrowserFile> loadedFiles = new();
+    private bool isUploading;
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        loadedFiles.Clear();
+
+        foreach (var file in e.GetMultipleFiles(1))
+        {
+            try
+            {
+                loadedFiles.Add(file);
+
+                var trustedFileNameForFileStorage = $"{Path.GetRandomFileName()}_{file.Name}";
+
+                string folderPath = Path.Combine(Environment.WebRootPath, "pictures");
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+                var path = Path.Combine(folderPath, trustedFileNameForFileStorage);
+
+                await using FileStream fs = new(path, FileMode.Create);
+                await file.OpenReadStream().CopyToAsync(fs);
+                Category.ImagePath = trustedFileNameForFileStorage;
+            }
+            catch (Exception ex)
+            {
+                //Logger.LogError("File: {Filename} Error: {Error}", file.Name, ex.Message);
+            }
+        }
+    }
+}

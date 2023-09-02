@@ -1,0 +1,76 @@
+﻿@using System.Timers
+@using System
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject CountdownService countdownService
+
+@if (hotDeal != null)
+{
+	<div id="hot-deal" class="section">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="hot-deal">
+						<ul class="hot-deal-countdown">
+							<li>
+								<div>
+									<h3>@countdownService.TimeLeft.Days</h3>
+									<span>Days</span>
+								</div>
+							</li>
+							<li>
+								<div>
+									<h3>@countdownService.TimeLeft.Hours</h3>
+									<span>Hours</span>
+								</div>
+							</li>
+							<li>
+								<div>
+									<h3>@countdownService.TimeLeft.Minutes</h3>
+									<span>Mins</span>
+								</div>
+							</li>
+							<li>
+								<div>
+									<h3>@countdownService.TimeLeft.Seconds</h3>
+									<span>Secs</span>
+								</div>
+							</li>
+						</ul>
+						<h2 class="text-uppercase">hot deal this week</h2>
+						<p>@hotDeal.Name</p>
+						<NavLink class="primary-btn cta-btn" href="@("/products/" + hotDeal.Id)">Shop now</NavLink>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	private ProductDetailsModel hotDeal = null;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			countdownService.OnTimeUpdated += UpdateState;
+
+			hotDeal = await httpClient.HotDealAsync();
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+
+	private void UpdateState()
+	{
+		InvokeAsync(StateHasChanged);
+	}
+
+	public void Dispose()
+	{
+		countdownService.OnTimeUpdated -= UpdateState;
+	}
+}

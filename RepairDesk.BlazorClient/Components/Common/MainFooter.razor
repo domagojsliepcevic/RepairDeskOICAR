@@ -1,0 +1,134 @@
+﻿@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+
+<div id="newsletter" class="section">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="newsletter">
+					<p>Sign Up for the <strong>NEWSLETTER</strong></p>
+					<form>
+						<input class="input" type="email" placeholder="Enter Your Email">
+						<button class="newsletter-btn"><i class="fa fa-envelope"></i> Subscribe</button>
+					</form>
+					<ul class="newsletter-follow">
+						<li>
+							<a href="#"><i class="fa fa-facebook"></i></a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-twitter"></i></a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-instagram"></i></a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-pinterest"></i></a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<footer id="footer">
+	<div class="section">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-3 col-xs-6">
+					<div class="footer">
+						<h3 class="footer-title">About Us</h3>
+						<p>Your personalized description is placed here.</p>
+						<ul class="footer-links">
+							<li><a href="#"><i class="fa fa-map-marker"></i>10 000 Zagreb</a></li>
+							<li><a href="#"><i class="fa fa-phone"></i>+38599 1111 222</a></li>
+							<li><a href="#"><i class="fa fa-envelope-o"></i>oicar@example.com</a></li>
+						</ul>
+					</div>
+				</div>
+
+				<div class="col-md-3 col-xs-6">
+					<div class="footer">
+						<h3 class="footer-title">Categories</h3>
+						<ul class="footer-links">
+							@if (pagedResult != null && !pagedResult.Items.IsNullOrEmpty())
+							{
+								@foreach (var category in pagedResult.Items)
+								{
+									<li><a href="/categories/@category.Id">@category.Name</a></li>
+								}
+							}
+						</ul>
+					</div>
+				</div>
+
+				<div class="clearfix visible-xs"></div>
+
+				<div class="col-md-3 col-xs-6">
+					<div class="footer">
+						<h3 class="footer-title">Information</h3>
+						<ul class="footer-links">
+							<li><a href="#">About Us</a></li>
+							<li><a href="#">Contact Us</a></li>
+							<li><a href="#">Privacy Policy</a></li>
+							<li><a href="#">Orders and Returns</a></li>
+							<li><a href="#">Terms & Conditions</a></li>
+						</ul>
+					</div>
+				</div>
+
+				<div class="col-md-3 col-xs-6">
+					<div class="footer">
+						<h3 class="footer-title">Service</h3>
+						<ul class="footer-links">
+							<li><a href="/account">My Account</a></li>
+							<li><a href="/cart">View Cart</a></li>						
+							<li><a href="/orders">Track My Orders</a></li>
+							<li><a href="/repairs">Track My Repairs</a></li>
+							<li><a href="#">Help</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="bottom-footer" class="section">
+		<div class="container">
+			<!-- row -->
+			<div class="row">
+				<div class="col-md-12 text-center">
+					<ul class="footer-payments">
+						<li><a href="#"><i class="fa fa-cc-visa"></i></a></li>
+						<li><a href="#"><i class="fa fa-credit-card"></i></a></li>
+						<li><a href="#"><i class="fa fa-cc-paypal"></i></a></li>
+						<li><a href="#"><i class="fa fa-cc-mastercard"></i></a></li>
+						<li><a href="#"><i class="fa fa-cc-discover"></i></a></li>
+						<li><a href="#"><i class="fa fa-cc-amex"></i></a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</footer>
+
+@code {
+	private CategoryListModelPagedResult pagedResult;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadPage(1);
+	}
+
+	private async Task LoadPage(int pageNumber)
+	{
+		try
+		{
+			pagedResult = await httpClient.GetCategoriesPageAsync(pageNumber);
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+}

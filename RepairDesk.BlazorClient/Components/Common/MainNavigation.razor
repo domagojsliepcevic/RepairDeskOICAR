@@ -1,0 +1,40 @@
+﻿@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+
+<nav id="navigation">
+	<div class="container">
+		<div id="responsive-nav">
+			<ul class="main-nav nav navbar-nav">
+				<li class="active"><a href="/">Home</a></li>
+				@if (pagedResult != null && !pagedResult.Items.IsNullOrEmpty())
+				{
+					foreach (var category in pagedResult.Items.Where(c => !c.IsSpecial))
+					{
+						<li><a href="/categories/@category.Id">@category.Name</a></li>
+					}
+				}
+			</ul>
+		</div>
+	</div>
+</nav>
+
+@code {
+	private CategoryListModelPagedResult pagedResult;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadPage(1);
+	}
+
+	private async Task LoadPage(int pageNumber)
+	{
+		try
+		{
+			pagedResult = await httpClient.GetCategoriesPageAsync(pageNumber);
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+}

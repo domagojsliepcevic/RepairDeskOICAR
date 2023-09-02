@@ -1,0 +1,59 @@
+﻿@page "/categories/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+<MainHeader />
+<MainNavigation />
+@if (category != null)
+{
+    <section class="section">
+        <div class="container">
+            <div class="row col-md-12">
+                <h3>@category.Name</h3>
+            </div>
+            <div class="row">
+                <aside id="aside" class="col-md-3">
+                    <FiltersSidebar />
+                </aside>
+                <div id="store" class="col-md-9">
+                    @if (pagedResult != null)
+                    {
+                        <ProductsGrid Products=pagedResult.Items />
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <Loading />
+}
+<MainFooter />
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private CategoryDetailsModel category = null;
+    private ProductListModelPagedResult pagedResult = null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadPage(id, 1);
+    }
+
+    private async Task LoadPage(int categoryId, int pageNumber)
+    {
+        try
+        {
+            category = await httpClient.GetCategoryAsync(categoryId);
+            pagedResult = await httpClient.GetProductsByCategoryPageAsync(categoryId, pageNumber);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+}

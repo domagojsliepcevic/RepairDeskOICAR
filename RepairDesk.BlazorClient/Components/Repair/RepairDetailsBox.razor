@@ -1,0 +1,36 @@
+﻿@if (Data != null)
+{
+	<section class="section">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-5 order-details">
+					<div class="order-summary">
+						<div class="order-col">
+							<div><strong>DESCRIPTION</strong></div>
+							<div><strong>STATUS</strong></div>
+						</div>
+						<div class="order-col">
+							<div>@Data.Description</div>
+							<div>@Data.Status</div>
+						</div>
+					</div>
+					<div class="order-summary">
+						<div class="order-col">
+							<div><strong>REQUESTED</strong></div>
+							<div><strong>FINISHED</strong></div>
+						</div>
+						<div class="order-col">
+							<div>@Data.RequestDate.ToString("dd-MM-yyyy")</div>
+							<div>@(Data.FinishDate?.ToString("dd-MM-yyyy") ?? "---")</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+}
+
+@code {
+	[Parameter, EditorRequired]
+	public RepairDetailsModel Data { get; set; }
+}

@@ -1,0 +1,36 @@
+﻿@page "/products/{id:int}"
+@inject NavigationManager navMan
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+
+<MainHeader />
+<MainNavigation />
+@if(product == null)
+{
+    <Loading />
+}
+else
+{
+    <ProductDetails Product=product />
+	<RelatedProducts Products=null />
+}
+<MainFooter />
+
+@code {
+	[Parameter]
+	public int id { get; set; }
+	private ProductDetailsModel product = null;
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		try
+		{
+			product = await httpClient.GetProductAsync(id);
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+}

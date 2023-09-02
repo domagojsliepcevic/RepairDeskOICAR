@@ -1,0 +1,101 @@
+﻿@page "/user/profile/orders"
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+
+
+<h3>Orders</h3>
+
+@if (pagedResult == null)
+{
+    <p>Loading...</p>
+}
+else if (pagedResult.Items.IsNullOrEmpty())
+{
+    <p>You have no orders.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in pagedResult.Items)
+            {
+                <tr>
+                    <td>@order.Id</td>
+                    <td>@order.OrderDate.ToString("d")</td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td>@order.Status</td>
+                    <td><a href="@($"/user/profile/orders/{order.Id}")">Details</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button class="prev-btn" disabled="@IsFirstPage" @onclick="GoToPreviousPage">Previous</button>
+        <span class="page-info">Page @pagedResult.CurrentPage of @pagedResult.TotalPages</span>
+        <button class="next-btn" disabled="@IsLastPage" @onclick="GoToNextPage">Next</button>
+    </div>
+}
+
+@code {
+    private OrderListModelPagedResult pagedResult;
+    private bool IsFirstPage => pagedResult.CurrentPage == 1;
+    private bool IsLastPage => pagedResult.CurrentPage == pagedResult.TotalPages;
+    private ClaimsPrincipal principal { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        principal = authState.User;
+        if (!principal.Identity.IsAuthenticated)
+        {
+            navMan.NavigateTo("/user/login");
+        }
+        else
+        {
+            await LoadPage(1);
+        }
+    }
+
+    /* pagination */
+    private async Task LoadPage(int pageNumber)
+    {
+        try
+        {
+            pagedResult = await httpClient.GetOrdersPageAsync(pageNumber);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            await LoadPage(pagedResult.CurrentPage - 1);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (!IsLastPage)
+        {
+            await LoadPage(pagedResult.CurrentPage + 1);
+        }
+    }
+
+}

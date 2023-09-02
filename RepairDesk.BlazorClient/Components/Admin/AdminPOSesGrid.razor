@@ -1,0 +1,39 @@
+﻿<table class="admin table table-striped">
+@if (PagedData != null && !PagedData.Items.IsNullOrEmpty())
+{
+    <thead>
+        <tr>
+            <th class="text-right">#</th>
+            <th>Name</th>
+            <th>Location</th>
+            <th class="text-center">Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in PagedData.Items)
+    {
+        <tr>
+            <td class="text-right">@item.Id</td>
+            <td><NavLink href="@($"/admin/poses/{item.Id}")">@item.Name</NavLink></td>
+            <td>@item.Location</td>
+            <td class="text-center"><NavLink href="@($"/admin/poses/{item.Id}/delete")"><i class="fa fa-trash-o" aria-hidden="true"></i></NavLink></td>
+        </tr>
+    }
+    </tbody>
+}
+    else
+    {
+    <thead>
+        <tr>
+            <th class="text-center">No Data</th>
+        </tr>
+    </thead>
+    }
+</table>
+
+
+@code {
+    [Parameter, EditorRequired]
+    public POSListModelPagedResult PagedData { get; set; }
+
+}

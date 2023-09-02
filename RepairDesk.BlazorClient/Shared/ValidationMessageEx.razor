@@ -1,0 +1,29 @@
+﻿@using System.Linq.Expressions;
+@inherits ComponentBase
+
+@{
+    bool show = EditContext?.GetValidationMessages(For).Any() ?? false;// || (EditContext?.IsModified(For) ?? false);
+}
+
+@if (show)
+{
+    if(string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <ValidationMessage For="@For" />
+    }
+    else
+    {
+        <div class="validation-message">@ErrorMessage</div>
+    }
+}
+
+@code {
+    [CascadingParameter]
+    private EditContext EditContext { get; set; }
+
+    [Parameter]
+    public Expression<Func<object>> For { get; set; }
+
+    [Parameter]
+    public string ErrorMessage { get; set; }
+}

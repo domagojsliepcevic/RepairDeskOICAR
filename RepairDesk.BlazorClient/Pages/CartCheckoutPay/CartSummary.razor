@@ -1,0 +1,49 @@
+﻿@page "/cart/summary"
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+
+<h3>Cart Summary</h3>
+
+@if (cartHeadData == null)
+{
+    <p>Loading...</p>
+}
+else if (cartHeadData.Quantity == 0)
+{
+    <p>Your cart is empty.</p>
+}
+else
+{
+    <p>Total items: @cartHeadData.Quantity</p>
+    <p>Total: @cartHeadData.Total.ToString("C")</p>
+}
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+
+    private CartHeadModel cartHeadData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                cartHeadData = await httpClient.GetCartHeadAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+}

@@ -1,0 +1,77 @@
+﻿@if (User != null)
+{
+	<EditForm class="profile" Model="@User" OnValidSubmit="@OnSubmit">
+		<div class="form-group">
+			<InputText id="firstname" class="form-control" @bind-Value="User.FirstName" placeholder="First Name" />
+			<ValidationMessage For="@(() => User.FirstName)" />
+		</div>
+		<div class="form-group">
+			<InputText id="lastname" class="form-control" @bind-Value="User.LastName" placeholder="Last Name" />
+			<ValidationMessage For="@(() => User.LastName)" />
+		</div>
+		<div class="form-group">
+			<InputText id="email" type="email" class="form-control" @bind-Value="User.Email" placeholder="Email" />
+			<ValidationMessage For="@(() => User.Email)" />
+		</div>
+		<div class="form-group">
+			<InputText id="address" class="form-control" @bind-Value="User.Address" placeholder="Address" />
+			<ValidationMessage For="@(() => User.Address)" />
+		</div>
+		<div class="form-group">
+			<InputText id="city" class="form-control" @bind-Value="User.City" placeholder="City" />
+			<ValidationMessage For="@(() => User.City)" />
+		</div>
+		<div class="form-group">
+			<InputText id="country" class="form-control" @bind-Value="User.Country" placeholder="Country" />
+			<ValidationMessage For="@(() => User.Country)" />
+		</div>
+		<div class="form-group">
+			<InputText id="zipcode" class="form-control" @bind-Value="User.ZipCode" placeholder="ZIP Code" />
+			<ValidationMessage For="@(() => User.ZipCode)" />
+		</div>
+		<div class="form-group">
+			<InputText id="phone" class="form-control" @bind-Value="User.PhoneNumber" placeholder="Phone Number" />
+			<ValidationMessage For="@(() => User.PhoneNumber)" />
+		</div>
+		<button style="submit" class="primary-btn cta-btn">Save Changes</button>
+	</EditForm>
+}
+
+@code {
+	[Parameter, EditorRequired]
+	public UserDetailsModel Data { get; set; }
+	[Parameter, EditorRequired]
+	public UserEditModel User { get; set; }
+	[Parameter, EditorRequired]
+	public Func<Task> OnSubmit { get; set; }
+
+	protected override void OnParametersSet()
+	{
+		if (Data != null)
+		{
+			User.Id = Data.Id;
+			User.FirstName = Data.FirstName;
+			User.LastName = Data.LastName;
+			User.Email = Data.Email;
+			User.Address = Data.Address;
+			User.City = Data.City;
+			User.Country = Data.Country;
+			User.ZipCode = Data.ZipCode;
+			User.PhoneNumber = Data.PhoneNumber;
+		}
+		else
+		{
+			User.Id = 0;
+			User.FirstName = "";
+			User.LastName = "";
+			User.Email = "";
+			User.Address = "";
+			User.City = "";
+			User.Country = "";
+			User.ZipCode = "";
+			User.PhoneNumber = "";
+		}
+
+		StateHasChanged();
+	}
+}

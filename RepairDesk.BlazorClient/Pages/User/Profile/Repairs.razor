@@ -1,0 +1,75 @@
+﻿@page "/repairs"
+@inject IRepairDeskApiClient httpClient
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+<MainHeader />
+<MainNavigation />
+<section class="section">
+	<div class="container">
+		<div class="row">
+			<aside id="aside" class="col-md-3">
+				<ProfileMenu />
+			</aside>
+			<div class="col-md-9">
+                <div class="section-title">
+                    <h3 class="title">Repairs</h3>
+                </div>
+                <RepairsGrid PagedData="pagedData" />
+			</div>
+		</div>
+	</div>
+</section>
+<MainFooter />
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private bool isFirstPage => pagedData.CurrentPage == 1;
+    private bool isLastPage => pagedData.CurrentPage == pagedData.TotalPages;
+    private RepairListModelPagedResult pagedData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                await LoadPage(1);
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+
+    /* pagination */
+    private async Task LoadPage(int pageNumber)
+    {
+        pagedData = await httpClient.GetRepairsForUserPageAsync(pageNumber);
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (!isFirstPage)
+        {
+            await LoadPage(pagedData.CurrentPage - 1);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (!isLastPage)
+        {
+            await LoadPage(pagedData.CurrentPage + 1);
+        }
+    }
+}

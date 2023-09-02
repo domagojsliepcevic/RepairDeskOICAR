@@ -1,0 +1,141 @@
+﻿@page "/admin/inventory/products/{id:int}/edit"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+@if (isAdmin)
+{
+    <h3>Edit Product</h3>
+
+    <EditForm Model="@product" OnValidSubmit="@OnSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <InputText id="name" class="form-control" @bind-Value="product.Name" />
+            <ValidationMessage For="@(() => product.Name)" />
+        </div>
+
+        <div class="form-group">
+            <label for="brand">Brand:</label>
+            <InputText id="brand" class="form-control" @bind-Value="product.Brand" />
+            <ValidationMessage For="@(() => product.Brand)" />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="product.Description" />
+            <ValidationMessage For="@(() => product.Description)" />
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price:</label>
+            <InputNumber id="price" class="form-control" @bind-Value="product.Price" />
+            <ValidationMessageEx For="@(() => product.Price)" ErrorMessage="Price has to be greater than zero." />
+        </div>
+
+        <div class="form-group">
+            <label for="quantity">Quantity:</label>
+            <InputNumber id="quantity" class="form-control" @bind-Value="product.Quantity" />
+            <ValidationMessage For="@(() => product.Quantity)" />
+        </div>
+
+        <div class="form-group">
+            <label for="category">Category:</label>
+            <InputSelect id="category" class="form-control" @bind-Value="product.CategoryId">
+                <option value="0">-- choose category --</option>
+                @if (categoriesData != null && !categoriesData.Items.IsNullOrEmpty())
+                {
+                    @foreach (var category in categoriesData.Items)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessageEx For="@(() => product.CategoryId)" ErrorMessage="Category is required field." />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" @onclick="GoBack">Back to List</button>
+    </EditForm>
+}
+else
+{
+    <div>Unauthorized</div>
+}
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+
+    private int pageNr = 1;
+    private ProductEditModel product = new ProductEditModel();
+    private CategoryListModelPagedResult categoriesData = null;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    categoriesData = await httpClient.GetCategoriesPageAsync(pageNr); // todo load data
+                    var data = await httpClient.GetProductAsync(id);
+                    product.Id = data.Id;
+                    product.Name = data.Name;
+                    product.Brand = data.Brand;
+                    product.Description = data.Description;
+                    product.Price = data.Price;
+                    product.Quantity = data.Quantity;
+                    product.CategoryId = data.CategoryId;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var data = await httpClient.EditProductAsync(id, product);
+            if (data != null)
+            {
+                // todo
+                toastService.ShowSuccess("success");
+                GoBack();
+            }
+            else
+            {
+                // todo
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+
+    }
+
+    private void GoBack()
+    {
+        navMan.NavigateTo("/admin/inventory/products");
+    }
+}

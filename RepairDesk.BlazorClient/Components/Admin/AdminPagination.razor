@@ -1,0 +1,28 @@
+﻿@if (CurrentPage > 0 && TotalPages > 0)
+{
+    <div class="pagination">
+        <button disabled="@(CurrentPage == 1)" @onclick="GoToPreviousPage">
+            <i class="fa fa-angle-left" aria-hidden="true"></i>
+        </button>
+        <span class="page-info">&nbsp;@CurrentPage / @TotalPages&nbsp;</span>
+        <button disabled="@(CurrentPage == TotalPages)" @onclick="GoToNextPage">
+            <i class="fa fa-angle-right" aria-hidden="true"></i>
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public int CurrentPage { get; set; }
+
+    [Parameter, EditorRequired]
+    public int TotalPages { get; set; }
+
+    [Parameter, EditorRequired]
+    public Func<Task> GoToPreviousPage { get; set; }
+
+    [Parameter, EditorRequired]
+    public Func<Task> GoToNextPage { get; set; }
+
+}
+

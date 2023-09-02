@@ -1,0 +1,103 @@
+﻿@page "/admin/products"
+@inject IRepairDeskApiClient httpClient
+@inject PaginationService paginationService
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+<div class="container-fluid">
+    <div class="row">
+        <AdminHeader />
+    </div>
+    <div class="row">
+        @if (isAdmin)
+        {
+            <div class="col-md-2">
+                <AdminNav />
+            </div>
+            <div class="col-md-10">
+                <div class="row col-md-12" style="padding:1rem;">
+                    <div class="col-md-6">
+                        <h3>Products</h3>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <NavLink href="/admin/products/new" class="primary-btn cta-btn">Add New</NavLink>
+                    </div>
+                </div>
+                <div class="row col-md-12">
+                    @if (pagedData == null)
+                    {
+                        <Loading />
+                    }
+                    else
+                    {
+                        <AdminProductsGrid PagedData="@pagedData" />
+                        <AdminPagination CurrentPage="pagedData.CurrentPage" TotalPages="pagedData.TotalPages"
+                                 GoToNextPage="GoToNextPage" GoToPreviousPage="GoToPreviousPage" />
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <Unauthorized />
+        }
+    </div>
+</div>
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+    private bool isFirstPage => pagedData.CurrentPage == 1;
+    private bool isLastPage => pagedData.CurrentPage == pagedData.TotalPages;
+    private ProductListModelPagedResult pagedData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    await LoadPage(paginationService.AdminProductsCurrentPage ?? 1);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+             toastService.ShowError(ex.Message); // todo
+        }
+    }
+
+
+    /* pagination */
+    private async Task LoadPage(int pageNumber)
+    {
+        pagedData = await httpClient.GetProductsPageAsync(pageNumber);
+        paginationService.AdminProductsCurrentPage = pageNumber;
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (!isFirstPage)
+        {
+            await LoadPage(pagedData.CurrentPage - 1);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (!isLastPage)
+        {
+            await LoadPage(pagedData.CurrentPage + 1);
+        }
+    }
+}

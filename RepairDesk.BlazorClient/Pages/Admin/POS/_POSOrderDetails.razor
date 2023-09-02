@@ -1,0 +1,78 @@
+﻿@page "/admin/pos/{posid:int}/orders/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+@if (isAdmin)
+{
+    <h3>Order Details</h3>
+
+    @if (order == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <p>Order ID: @order.Id</p>
+        <p>Date: @order.OrderDate.ToString("d")</p>
+        <p>Total Price: @order.TotalAmount.ToString("C")</p>
+        <p>Status: @order.Status</p>
+
+        <h4>Order Items:</h4>
+        <ul>
+            @foreach (var item in order.OrderItems)
+            {
+                <li>@item.Product: @item.Quantity (@item.UnitPrice.ToString("C") each)</li>
+            }
+        </ul>
+        <button class="btn btn-primary" @onclick="BackToList">Back to List</button>
+    }
+}
+else
+{
+    <div>Unauthorized</div>
+}
+
+
+@code {
+    [Parameter]
+    public int posid { get; set; }
+    [Parameter]
+    public int id { get; set; } // orderId
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+
+    private OrderDetailsModel order = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    order = await httpClient.GetOrderByPOSAsync(posid, id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void BackToList()
+    {
+        navMan.NavigateTo($"/admin/pos/{posid}/orders");
+    }
+
+}

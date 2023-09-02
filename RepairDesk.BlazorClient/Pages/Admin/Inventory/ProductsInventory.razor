@@ -1,0 +1,121 @@
+﻿@page "/admin/inventory/products"
+@inject IRepairDeskApiClient httpClient
+@inject PaginationService paginationService
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+@if (isAdmin)
+{
+    <h3>Products Inventory</h3>
+
+    @if (productData == null || productData.Items == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!productData.Items.Any())
+    {
+        <p>No products found in inventory.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Category</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in productData.Items)
+                {
+                    <tr>
+                        <td>@product.Id</td>
+                        <td>@product.Name</td>
+                        <td>@product.Quantity</td>
+                        <td>@product.Price.ToString("C")</td>
+                        <td>@product.CategoryName</td>
+                        <td><a href="@($"/admin/stock/products/{product.Id}/edit")">Edit</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <button class="prev-btn" disabled="@IsFirstPage" @onclick="GoToPreviousPage">Previous</button>
+            <span class="page-info">Page @productData.CurrentPage of @productData.TotalPages</span>
+            <button class="next-btn" disabled="@IsLastPage" @onclick="GoToNextPage">Next</button>
+        </div>
+    }
+}
+else
+{
+    <div>Unauthorized</div>
+}
+
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+
+    private ProductListModelPagedResult productData;
+    private bool IsFirstPage => productData.CurrentPage == 1;
+    private bool IsLastPage => productData.CurrentPage == productData.TotalPages;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    await LoadPage(paginationService.ProductInventoryCurrentPage ?? 1);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+
+    /* pagination */
+    private async Task LoadPage(int pageNumber)
+    {
+        productData = await httpClient.GetProductsPageAsync(pageNumber);
+        paginationService.ProductInventoryCurrentPage = pageNumber;
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            await LoadPage(productData.CurrentPage - 1);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (!IsLastPage)
+        {
+            await LoadPage(productData.CurrentPage + 1);
+        }
+    }
+}
+
+
+
+

@@ -1,0 +1,47 @@
+﻿@page "/admin/inventory"
+@inject IRepairDeskApiClient httpClient
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+@if (isAdmin)
+{
+<h3>Inventory Administration</h3>
+
+<p>Here you can manage your inventory and get notified when stock levels are low.</p>
+
+<ul>
+    <li><a href="/admin/inventory/products">Products Inventory</a></li>
+    <li><a href="/admin/inventory/lowstocknotification">Low Stock Notification</a></li>
+</ul>
+}
+else
+{
+<div>Unauthorized</div>
+}
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+}

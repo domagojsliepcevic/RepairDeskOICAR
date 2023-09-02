@@ -1,0 +1,88 @@
+﻿@page "/admin/poses/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+<div class="container-fluid">
+    <div class="row">
+        <AdminHeader />
+    </div>
+    <div class="row">
+        @if (isAdmin)
+        {
+        <div class="col-md-2">
+            <AdminNav />
+        </div>
+        <div class="col-md-10">
+            <div class="row col-md-6" style="margin-top:1rem;">
+                    <h3>POS Details</h3>
+                    <NavLink href="/admin/poses" class="admin list-link">POS List</NavLink>
+                <AdminPOSEditForm Data="@posData" POS="@pos" OnSubmit="@OnSubmit" />
+            </div>
+        </div>
+        }
+        else
+        {
+            <Unauthorized />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+    private POSDetailsModel posData = null;
+    private POSEditModel pos = new POSEditModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    posData = await httpClient.GetPOSAsync(id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var data = await httpClient.EditPOSAsync(id, pos);
+            if (data != null)
+            {
+                toastService.ShowSuccess("success");
+                GoToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void GoToList()
+    {
+        navMan.NavigateTo("/admin/poses");
+    }
+}
+

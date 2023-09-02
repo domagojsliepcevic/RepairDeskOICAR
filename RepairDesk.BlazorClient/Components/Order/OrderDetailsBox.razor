@@ -1,0 +1,39 @@
+﻿@if (Data != null && !Data.OrderItems.IsNullOrEmpty())
+{
+	<section class="section">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-5 order-details">
+					<div class="order-summary">
+						<div class="order-col">
+							<div><strong>PRODUCT</strong></div>
+							<div><strong>TOTAL</strong></div>
+						</div>
+						<div class="order-products">
+							@foreach (var item in Data.OrderItems)
+							{
+								<div class="order-col">
+									<div>@item.Quantity x @item.Product</div>
+									<div>@item.Price.ToString("#,##0.00") €</div>
+								</div>
+							}
+						</div>
+						<div class="order-col">
+							<div><strong>TOTAL</strong></div>
+							<div>@Data.TotalAmount.ToString("#,##0.00") €</div>
+						</div>
+						<div class="order-col">
+							<div><strong>PAYMENT METHOD</strong></div>
+							<div>@Data.PaymentMethod</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+}
+
+@code {
+	[Parameter, EditorRequired]
+	public OrderDetailsModel Data { get; set; }
+}

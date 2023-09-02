@@ -1,0 +1,119 @@
+﻿@page "/admin/pos"
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+
+@if (isAdmin)
+{
+    <h3>POS Overview</h3>
+
+    @if (pagedResult == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (pagedResult.Items.IsNullOrEmpty())
+    {
+        <p>There are no POSes in the system.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Orders</th>
+                    <th>Repairs</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pos in pagedResult.Items)
+                {
+                    <tr>
+                        <td>@pos.Id</td>
+                        <td>@pos.Name</td>
+                        <td>@pos.Location</td>
+                        <td><a href=@($"/admin/pos/{pos.Id}/orders")>Orders</a></td>
+                        <td><a href=@($"/admin/pos/{pos.Id}/repairs")>Repairs</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <button class="prev-btn" disabled="@IsFirstPage" @onclick="GoToPreviousPage">Previous</button>
+            <span class="page-info">Page @pagedResult.CurrentPage of @pagedResult.TotalPages</span>
+            <button class="next-btn" disabled="@IsLastPage" @onclick="GoToNextPage">Next</button>
+        </div>
+    }
+}
+else
+{
+    <div>Unauthorized</div>
+}
+
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+
+    private POSListModelPagedResult pagedResult;
+    private bool IsFirstPage => pagedResult.CurrentPage == 1;
+    private bool IsLastPage => pagedResult.CurrentPage == pagedResult.TotalPages;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    await LoadPage(1);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    /* pagination */
+    private async Task LoadPage(int pageNumber)
+    {
+        try
+        {
+            pagedResult = await httpClient.GetPOSesPageAsync(pageNumber);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            await LoadPage(pagedResult.CurrentPage - 1);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (!IsLastPage)
+        {
+            await LoadPage(pagedResult.CurrentPage + 1);
+        }
+    }
+}

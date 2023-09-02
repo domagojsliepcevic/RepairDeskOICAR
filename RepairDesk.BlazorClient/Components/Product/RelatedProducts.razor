@@ -1,0 +1,31 @@
+﻿@if (!Products.IsNullOrEmpty())
+{
+	<!-- related products -->
+	<section class="section">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="section-title text-center">
+						<h3 class="title">Related Products</h3>
+					</div>
+				</div>
+				@foreach(var product in Products)
+                {
+					<!-- product -->
+					<div class="col-md-3 col-xs-6">
+                        <ProductBox Product=product />
+                    </div>
+					<!-- /product -->
+				})
+			</div>
+		</div>
+	</section>
+	<!-- /related products -->
+}
+
+@code {
+	[Parameter, EditorRequired]
+	public ICollection<ProductListModel> Products { get; set; }
+
+
+}

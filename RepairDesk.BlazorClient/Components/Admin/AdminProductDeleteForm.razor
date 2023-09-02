@@ -1,0 +1,48 @@
+﻿@if (Data != null)
+{
+    <form @onsubmit="@OnSubmit">
+        <fieldset disabled>
+            <div class="form-group">
+                <label for="id" class="h3"># <span>@Data.Id</span></label>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input id="name" class="form-control" value="@Data.Name" />
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" class="form-control" value="@Data.Description">
+                </textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Price:</label>
+                <input type="text" id="price" class="form-control" value="@Data.Price" />
+            </div>
+
+            <div class="form-group">
+                <label for="quantity">Quantity:</label>
+                <input type="text" id="quantity" class="form-control" value="@Data.Quantity" />
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <input id="name" class="form-control" value="@Data.CategoryName" />
+            </div>
+            <div>
+                <img src="/pictures/@Data.ImagePath" alt="Preview" style="max-width:200px; max-height:200px;" />
+            </div>
+        </fieldset>
+
+        <button type="submit" class="primary-btn cta-btn">Delete</button>
+    </form>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public ProductDetailsModel Data { get; set; }
+    [Parameter, EditorRequired]
+    public Func<Task> OnSubmit { get; set; }
+}

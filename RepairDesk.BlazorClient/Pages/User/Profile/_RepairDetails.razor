@@ -1,0 +1,55 @@
+﻿@page "/user/profile/repairs/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+
+<h3>Repair Details</h3>
+
+@if (repair == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <p>Repair ID: @repair.Id</p>
+    <p>Requested on: @repair.RequestDate.ToString("d")</p>
+    <p>Finished on: @(repair.FinishDate.HasValue ? repair.FinishDate.Value.ToString("d") : "---")</p>
+    <p>Description: @repair.Description</p>
+    <p>Status: @repair.Status</p>
+    <button class="btn btn-primary" @onclick="BackToList">Back to List</button>
+}
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private ClaimsPrincipal principal { get; set; }
+    private RepairDetailsModel repair = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                repair = await httpClient.GetRepairAsync(id);
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void BackToList()
+    {
+        navMan.NavigateTo("/user/profile/repairs");
+    }
+}

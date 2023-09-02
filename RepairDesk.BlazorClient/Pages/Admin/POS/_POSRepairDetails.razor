@@ -1,0 +1,74 @@
+﻿@page "/admin/pos/{posid:int}/repairs/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+@if (isAdmin)
+{
+    <h3>Repair Details</h3>
+
+    @if (repair == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <p>Repair ID: @repair.Id</p>
+        <p>Requested on: @repair.RequestDate.ToString("d")</p>
+        <p>Finished on: @(repair.FinishDate.HasValue ? repair.FinishDate.Value.ToString("d") : "---")</p>
+        <p>Description: @repair.Description</p>
+        <p>Status: @repair.Status</p>
+        <button class="btn btn-primary" @onclick="BackToList">Back to List</button>
+    }
+}
+else
+{
+    <div>Unauthorized</div>
+}
+
+
+@code {
+    [Parameter]
+    public int posid { get; set; }
+    [Parameter]
+    public int id { get; set; } // repairId
+
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+
+    private RepairDetailsModel repair = null;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    repair = await httpClient.GetRepairByPOSAsync(posid, id);
+
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void BackToList()
+    {
+        navMan.NavigateTo($"/admin/pos/{posid}/repairs");
+    }
+}

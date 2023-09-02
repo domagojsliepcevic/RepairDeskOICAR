@@ -1,0 +1,36 @@
+﻿@page "/user/profile"
+@inject IRepairDeskApiClient httpClient
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+
+@if (principal?.Identity?.IsAuthenticated ?? false)
+{
+<h3>Profile</h3>
+
+<div>
+    <p>Welcome to your profile!</p>
+
+    <ul>
+        <li><a href="/user/profile/orders">View Past Orders</a></li>
+        <li><a href="/user/profile/repairs">View Past Repair Requests</a></li>
+        <li><a href="/user/profile/details">View/Edit Profile Details</a></li>
+        <li><a href="/user/closeaccount">Close Account</a></li>
+    </ul>
+</div>
+}
+
+
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        principal = authState.User;
+        if (!principal.Identity.IsAuthenticated)
+        {
+            navMan.NavigateTo("/user/login");
+        }
+    }
+}

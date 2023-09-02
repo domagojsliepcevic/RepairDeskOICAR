@@ -1,0 +1,79 @@
+﻿@if (!CartItems.IsNullOrEmpty() && CartHead != null)
+{
+	<section class="section">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-5 order-details" style="float:unset;margin:0 auto;">
+					<div class="section-title text-center">
+						<h3 class="title">Your Order</h3>
+					</div>
+					<div class="order-summary">
+						<div class="order-col">
+							<div><strong>PRODUCT</strong></div>
+							<div><strong>TOTAL</strong></div>
+						</div>
+						<div class="order-products">
+						@foreach (var item in CartItems)
+						{
+							<div class="order-col">
+								<div>@item.Quantity x @item.ProductName</div>
+									<div>@item.Price.ToString("#,##0.00") €</div>
+							</div>
+						}
+						</div>
+						<div class="order-col">
+							<div>Shiping</div>
+							<div><strong>FREE</strong></div>
+						</div>
+						<div class="order-col">
+							<div><strong>TOTAL</strong></div>
+							<div><strong class="order-total">@CartHead.Total.ToString("#,##0.00") €</strong></div>
+						</div>
+					</div>
+					<div class="payment-method">
+						<div style="padding-bottom:1rem;">
+							<strong>PAYMENT METHOD</strong>
+						</div>
+							<div>
+							<input type="radio" value="cod" @onchange="SetPaymentMethod" checked="@IsChecked("cod")" />
+							<label> Cash On Delivery</label>
+							</div>
+							<div>
+							<input type="radio" value="stripe" @onchange="SetPaymentMethod" checked="@IsChecked("stripe")" />
+							<label> Stripe</label>
+							</div>
+
+					</div>
+					@*
+					<div>
+						<input type="checkbox" id="terms">
+						<label for="terms"> I've read and accept the <a href="#">terms & conditions</a></label>
+					</div>
+					*@
+					<button type="button" class="primary-btn order-submit" @onclick="PlaceOrder">Place order</button>
+				</div>
+			</div>
+		</div>
+	</section>
+}
+
+@code {
+	[Parameter, EditorRequired]
+	public ICollection<CartItemListModel> CartItems { get; set; }
+	[Parameter, EditorRequired]
+	public CartHeadModel CartHead { get; set; }
+	[Parameter, EditorRequired]
+	public Func<Task> PlaceOrder { get; set; }
+	[Parameter, EditorRequired]
+	public PaymentData PaymentData { get; set; }
+
+	private void SetPaymentMethod(ChangeEventArgs e)
+	{
+		PaymentData.PaymentMethod = e.Value.ToString();
+	}
+
+	private bool IsChecked(string paymentMethod)
+	{
+		return PaymentData.PaymentMethod == paymentMethod;
+	}
+}

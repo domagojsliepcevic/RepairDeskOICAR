@@ -1,0 +1,40 @@
+﻿<table class="admin table table-striped">
+@if (PagedData != null && !PagedData.Items.IsNullOrEmpty())
+{
+    <thead>
+        <tr>
+            <th class="text-right">#</th>
+            <th>Image</th>
+            <th>Name</th>
+            <th class="text-center">Special</th>
+            <th class="text-center">Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in PagedData.Items)
+        {
+            <tr>
+                <td class="text-right">@item.Id</td>
+                <td><img src="/pictures/@item.ImagePath" alt="Preview" style="max-width:50px; max-height:50px;" /></td>
+                <td><NavLink href="@($"/admin/categories/{item.Id}")">@item.Name</NavLink></td>
+                <td class="text-center"><i class="fa @(item.IsSpecial ? "fa-check" : "fa-times")" aria-hidden="true"></i></td>
+                <td class="text-center"><NavLink href="@($"/admin/categories/{item.Id}/delete")"><i class="fa fa-trash-o" aria-hidden="true"></i></NavLink></td>
+            </tr>
+        }
+    </tbody>
+}
+else
+{
+    <thead>
+        <tr>
+            <th class="text-center">No Data</th>
+        </tr>
+    </thead>
+}
+</table>
+
+@code {
+    [Parameter, EditorRequired]
+    public CategoryListModelPagedResult PagedData { get; set; }
+
+}

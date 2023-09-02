@@ -1,0 +1,74 @@
+﻿@inject ILocalStorageService localStorage
+@inject NavigationManager navMan
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">RepairDesk</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+@*    <nav class="flex-column">
+        <div class="nav-item">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        <div class="nav-item">
+            <NavLink class="nav-link" href="products">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Products
+            </NavLink>
+        </div>
+    </nav>*@
+    <nav class="flex-column">
+        <div class="nav-item">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+            <NavLink class="nav-link" href="/user/login">Login</NavLink>
+            <NavLink class="nav-link" href="#" @onclick="@Logout">Logout</NavLink>
+            <NavLink class="nav-link" href="/user/registration">Registration</NavLink>
+            <NavLink class="nav-link" href="/user/profile">Profile</NavLink>
+            <NavLink class="nav-link" href="/user/profile/details">Profile Details</NavLink>
+            <NavLink class="nav-link" href="/user/account/close">Close Account</NavLink>
+            <NavLink class="nav-link" href="/user/profile/repairs">Profile Repairs</NavLink>
+            <NavLink class="nav-link" href="/user/profile/repairs/1">Profile Repairs - Details</NavLink>
+            <NavLink class="nav-link" href="/user/profile/orders">Profile Orders</NavLink>
+            <NavLink class="nav-link" href="/user/profile/orders/1">Profile Orders - Details</NavLink>
+            <NavLink class="nav-link" href="/catalog/products">Products</NavLink>
+            <NavLink class="nav-link" href="/catalog/products/1">Product - Details</NavLink>
+            <NavLink class="nav-link" href="/catalog/products/search">Products Search</NavLink>
+            <NavLink class="nav-link" href="/cart">Cart Overview</NavLink>
+            <NavLink class="nav-link" href="/cart/summary">Cart Summary</NavLink>
+            <NavLink class="nav-link" href="/admin/pos">POS Overview</NavLink>
+            <NavLink class="nav-link" href="/admin/pos/1/orders">POS Orders</NavLink>
+            <NavLink class="nav-link" href="/admin/pos/1/repairs">POS Repairs</NavLink>
+            <NavLink class="nav-link" href="/admin/inventory/products/add">Add Product</NavLink>
+            <NavLink class="nav-link" href="/admin/inventory/products/1/edit">Edit Product</NavLink>
+            <NavLink class="nav-link" href="/admin/inventory">Inventory Overview</NavLink>
+            <NavLink class="nav-link" href="/admin/inventory/products">Product Inventory</NavLink>
+            <NavLink class="nav-link" href="/admin/inventory/lowstocknotification">Low Stock Notification</NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task Logout()
+    {
+        await localStorage.RemoveItemAsync("authToken");
+
+        navMan.NavigateTo("/");
+    }
+}

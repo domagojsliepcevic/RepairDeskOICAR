@@ -1,0 +1,126 @@
+﻿@inject IWebHostEnvironment Environment
+@using System.IO
+
+<EditForm Model="@Product" OnValidSubmit="@OnSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" class="form-control" @bind-Value="Product.Name" />
+        <ValidationMessage For="@(() => Product.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="brand">Brand:</label>
+        <InputTextArea id="brand" class="form-control" @bind-Value="Product.Brand" />
+        <ValidationMessage For="@(() => Product.Brand)" />
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <InputTextArea id="description" class="form-control" @bind-Value="Product.Description" />
+        <ValidationMessage For="@(() => Product.Description)" />
+    </div>
+
+    <div class="form-group">
+        <label for="longdescription">Long Description:</label>
+        <InputTextArea id="longdescription" class="form-control" @bind-Value="Product.LongDescription" />
+        <ValidationMessage For="@(() => Product.LongDescription)" />
+    </div>
+
+    <div class="form-group">
+        <label for="rating">Rating:</label>
+        <InputNumber id="rating" class="form-control" @bind-Value="Product.Rating" />
+        <ValidationMessage For="@(() => Product.Rating)" />
+    </div>
+
+    <div class="form-group">
+        <label for="price">Price:</label>
+        <InputNumber id="price" class="form-control" @bind-Value="Product.Price" />
+        <ValidationMessageEx For="@(() => Product.Price)" ErrorMessage="Price has to be greater than zero." />
+    </div>
+
+    <div class="form-group">
+        <label for="quantity">Quantity:</label>
+        <InputNumber id="quantity" class="form-control" @bind-Value="Product.Quantity" />
+        <ValidationMessage For="@(() => Product.Quantity)" />
+    </div>
+
+    <div class="form-group">
+        <label for="category">Category:</label>
+        <InputSelect id="category" class="form-control" @bind-Value="Product.CategoryId">
+            <option value="0">-- choose category --</option>
+            @if (CategoriesData != null && !CategoriesData.Items.IsNullOrEmpty())
+            {
+                @foreach (var category in CategoriesData.Items)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            }
+        </InputSelect>
+        <ValidationMessageEx For="@(() => Product.CategoryId)" ErrorMessage="Category is required field." />
+    </div>
+
+    <div class="form-group">
+        <label for="quantity">Image:</label>
+        <input type="hidden" @bind="Product.ImagePath" />
+        <InputFile id="flies" class="form-control" OnChange="@LoadFiles" />
+        <ValidationMessageEx For="@(() => Product.ImagePath)" ErrorMessage="Image is required." />
+        @if (loadedFiles != null && loadedFiles.Count > 0)
+        {
+            <img src="/pictures/@Product.ImagePath" alt="Preview" style="max-width:200px; max-height:200px;" />
+        }
+    </div>
+
+
+    <button type="submit" class=" primary-btn cta-btn">Save New</button>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public CategoryListModelPagedResult CategoriesData { get; set; }
+    [Parameter, EditorRequired]
+    public ProductAddModel Product { get; set; }
+    [Parameter, EditorRequired]
+    public Func<Task> OnSubmit { get; set; }
+
+    private List<IBrowserFile> loadedFiles = new();
+    private bool isUploading;
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        isUploading = true;
+        loadedFiles.Clear();
+
+        foreach (var file in e.GetMultipleFiles(1))
+        {
+            try
+            {
+                loadedFiles.Add(file);
+
+                var trustedFileNameForFileStorage = $"{Path.GetRandomFileName()}_{file.Name}";
+
+                string folderPath = Path.Combine(Environment.WebRootPath, "pictures");
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+                var path = Path.Combine(folderPath, trustedFileNameForFileStorage);
+
+                await using FileStream fs = new(path, FileMode.Create);
+                await file.OpenReadStream().CopyToAsync(fs);
+
+                //var buffer = new byte[file.Size];
+                //await file.OpenReadStream().ReadAsync(buffer);
+                //imageDataUrl = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
+                Product.ImagePath = trustedFileNameForFileStorage;
+            }
+            catch (Exception ex)
+            {
+                //Logger.LogError("File: {Filename} Error: {Error}", file.Name, ex.Message);
+            }
+        }
+
+        isUploading = false;
+    }
+}

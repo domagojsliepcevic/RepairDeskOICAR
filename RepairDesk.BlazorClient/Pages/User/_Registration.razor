@@ -1,0 +1,78 @@
+﻿@page "/user/registration"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+<h3>Registration</h3>
+
+<EditForm Model="registration" OnValidSubmit="@OnSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <InputText id="email" class="form-control" @bind-Value="registration.Email" />
+        <ValidationMessage For="@(() => registration.Email)" />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="registration.Password" />
+        <ValidationMessage For="@(() => registration.Password)" />
+    </div>
+
+    <div class="form-group">
+        <label for="confirmPassword">Confirm Password:</label>
+        <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="registration.ConfirmPassword" />
+        <ValidationMessage For="@(() => registration.ConfirmPassword)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register</button>
+</EditForm>
+
+
+@code {
+    private LocalRegistrationModel registration = new LocalRegistrationModel();
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var urm = new UserRegistrationModel
+            {
+                Email = registration.Email,
+                Password = registration.Password
+            };
+            await httpClient.UserRegistrationAsync(urm);
+            toastService.ShowSuccess("success");
+            GoHome();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+
+        // todo
+        // Pozvati metodu za registraciju korisnika s registerModel.Email i registerModel.Password
+        // Nakon uspješne registracije, redirektati korisnika na stranicu za prijavu ili početnu stranicu
+    }
+
+    private void GoHome()
+    {
+        navMan.NavigateTo("/");
+    }
+
+    private class LocalRegistrationModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Email is not valid")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters long")]
+        public string Password { get; set; }
+
+        [Required(ErrorMessage = "Password confirmation is required")]
+        [Compare("Password", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; }
+    }
+}

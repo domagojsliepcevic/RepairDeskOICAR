@@ -1,0 +1,88 @@
+﻿<UserControl x:Class="RepairDesk.WpfClient.Components.MainGrid"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RepairDesk.WpfClient.Components"
+             xmlns:converters="clr-namespace:RepairDesk.WpfClient.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <converters:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" />
+    </UserControl.Resources>
+    <Grid Background="Beige">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="20"/>
+        </Grid.ColumnDefinitions>
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel
+            Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+            Background="#D10024"
+            Orientation="Horizontal">
+            <TextBlock 
+            FontSize="40"  Foreground="White" FontWeight="Bold" FontStyle="Italic"
+            Padding="10">
+            RepairDesk
+            </TextBlock>
+            <TextBlock FontSize="70" FontWeight="Bold" FontStyle="Italic" Foreground="black" Margin="-10 -20 0 0">.</TextBlock>
+        </StackPanel>
+
+        <StackPanel Orientation="Vertical" Grid.Row="1" Grid.Column="0" Background="#D10024">
+
+            <Button Width="150" Height="150" Background="Pink" Margin="10" Cursor="Hand" 
+                    Command="{Binding ShowLoginCommand}">
+                <StackPanel Orientation="Vertical">
+                    <Image 
+                    Width="100" Height="100"
+                    Source="pack://application:,,,/RepairDesk.WpfClient;component/Resources/login.png" />
+                    <TextBlock Text="Login" HorizontalAlignment="Center" FontSize="20" FontWeight="Bold" />
+                </StackPanel>
+            </Button>
+
+            <Button Width="150" Height="150" Background="Pink" Margin="10" Cursor="Hand" 
+                    Command="{Binding ShowProductsCommand}">
+                <StackPanel Orientation="Vertical">
+                    <Image 
+                    Width="100" Height="100"
+                    Source="pack://application:,,,/RepairDesk.WpfClient;component/Resources/product.png" />
+                    <TextBlock Text="Products" HorizontalAlignment="Center" FontSize="20" FontWeight="Bold" />
+                </StackPanel>
+            </Button>
+
+            <Button Width="150" Height="150" Background="Pink" Margin="10" Cursor="Hand"  
+                    Command="{Binding ShowOrderCommand}">
+                <StackPanel Orientation="Vertical">
+                    <Image 
+                    Width="100" Height="100"
+                    Source="pack://application:,,,/RepairDesk.WpfClient;component/Resources/order.png" />
+                    <TextBlock Text="Order" HorizontalAlignment="Center" FontSize="20" FontWeight="Bold" />
+                </StackPanel>
+            </Button>
+
+            <Button Width="150" Height="150" Background="Pink" Margin="10" Cursor="Hand" 
+                    Command="{Binding ShowTicketCommand}">
+                <StackPanel Orientation="Vertical">
+                    <Image 
+                    Width="100" Height="100"
+                    Source="pack://application:,,,/RepairDesk.WpfClient;component/Resources/ticket.png" />
+                    <TextBlock Text="Ticket" HorizontalAlignment="Center" FontSize="20" FontWeight="Bold" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <local:LoaderComponent Grid.Row="1" Grid.Column="1" IsLoading="{Binding IsLoading}" />
+        <ContentControl Grid.Row="1" Grid.Column="1" Margin="20" Content="{Binding CurrentView}" 
+                        Visibility="{Binding IsLoading, Converter={StaticResource InvertedBooleanToVisibilityConverter}}" />
+
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Background="#D10024" />
+        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Background="#D10024" />
+    </Grid>
+</UserControl>

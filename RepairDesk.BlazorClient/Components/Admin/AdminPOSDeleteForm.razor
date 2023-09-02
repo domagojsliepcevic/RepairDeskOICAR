@@ -1,0 +1,29 @@
+﻿@if (Data != null)
+{
+    <form @onsubmit="@OnSubmit">
+        <fieldset disabled>
+            <div class="form-group">
+                <label for="id" class="h3"># <span>@Data.Id</span></label>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input id="name" class="form-control" value="@Data.Name" />
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location:</label>
+                <input id="location" class="form-control" value="@Data.Location" />
+            </div>
+        </fieldset>
+
+        <button type="submit" class=" primary-btn cta-btn">Delete</button>
+    </form>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public POSDetailsModel Data { get; set; }
+    [Parameter, EditorRequired]
+    public Func<Task> OnSubmit { get; set; }
+}

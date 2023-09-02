@@ -1,0 +1,84 @@
+﻿@page "/admin/products/{id:int}/delete"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+<div class="container-fluid">
+    <div class="row">
+        <AdminHeader />
+    </div>
+    <div class="row">
+                @if (isAdmin)
+        {
+        <div class="col-md-2">
+            <AdminNav />
+        </div>
+        <div class="col-md-10">
+            <div class="row col-md-6" style="margin-top:1rem;">
+                <h3>Delete Product</h3>
+                <NavLink href="/admin/products" class="admin list-link">Product List</NavLink>
+                <h4 style="padding-top:1rem;">Are you sure you want to delete this product?</h4>
+                <AdminProductDeleteForm Data="@product" OnSubmit="@OnSubmit" />
+            </div>
+        </div>
+        }
+        else
+        {
+        <Unauthorized />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+    private ProductDetailsModel product = new ProductDetailsModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    product = await httpClient.GetProductAsync(id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            await httpClient.DeleteProductAsync(id);
+            toastService.ShowSuccess("success");
+            GoToList();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void GoToList()
+    {
+        navMan.NavigateTo("/admin/products");
+    }
+}
+

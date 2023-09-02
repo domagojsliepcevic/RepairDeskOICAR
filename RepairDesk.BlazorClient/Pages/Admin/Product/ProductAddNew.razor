@@ -1,0 +1,95 @@
+﻿@page "/admin/products/new"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject PaginationService paginationService
+@inject AuthenticationStateProvider authStateProvider
+@inject IToastService toastService
+
+<div class="container-fluid">
+    <div class="row">
+        <AdminHeader />
+    </div>
+    <div class="row">
+        @if (isAdmin)
+        {
+            <div class="col-md-2">
+                <AdminNav />
+            </div>
+            <div class="col-md-10">
+                <div class="row col-md-6" style="margin-top:1rem;">
+                    <NavLink href="/admin/products" class="admin list-link">Products List</NavLink>
+                    <h3>Add New Product</h3>
+                    <AdminProductAddForm Product="@product" CategoriesData="@categoriesData" OnSubmit="@OnSubmit" />
+                </div>
+            </div>
+        }
+        else
+        {
+            <Unauthorized />
+        }
+    </div>
+</div>
+
+@code {
+    private ProductAddModel product = new ProductAddModel();
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+
+    private int categoriesPageNr = 1;
+    private CategoryListModelPagedResult categoriesData = null;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    categoriesData = await httpClient.GetCategoriesPageAsync(categoriesPageNr); // todo
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var pdm = await httpClient.AddProductAsync(product);
+            if (pdm != null)
+            {
+                // todo
+                //product = new ProductAddModel(); // Reset the form
+                paginationService.AdminProductsCurrentPage = int.MaxValue;
+                toastService.ShowSuccess("success");
+                GoToList();
+            }
+            else
+            {
+                // todo
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void GoToList()
+    {
+        navMan.NavigateTo("/admin/products");
+    }
+}

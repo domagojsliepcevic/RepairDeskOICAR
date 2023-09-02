@@ -1,0 +1,81 @@
+﻿@page "/admin/poses/new"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject PaginationService paginationService
+@inject AuthenticationStateProvider authStateProvider
+@inject IToastService toastService
+
+<div class="container-fluid">
+    <div class="row">
+        <AdminHeader />
+    </div>
+    <div class="row">
+        @if (isAdmin)
+        {
+        <div class="col-md-2">
+            <AdminNav />
+        </div>
+        <div class="col-md-10">
+            <div class="row col-md-6" style="margin-top:1rem;">
+                <NavLink href="/admin/poses" class="admin list-link">POS List</NavLink>
+                <h3>Add New POS</h3>
+                <AdminPOSAddForm POS="@pos" OnSubmit="@OnSubmit" />
+            </div>
+        </div>
+        }
+        else
+        {
+            <Unauthorized />
+        }
+    </div>
+</div>
+
+@code {
+    private POSAddModel pos = new POSAddModel();
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var pdm =  await httpClient.AddPOSAsync(pos);
+            if (pdm != null)
+            {
+                paginationService.AdminPOSesCurrentPage = int.MaxValue;
+                toastService.ShowSuccess("success");
+                GoToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void GoToList()
+    {
+        navMan.NavigateTo("/admin/poses");
+    }
+}

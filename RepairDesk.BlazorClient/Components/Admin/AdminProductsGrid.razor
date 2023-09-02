@@ -1,0 +1,45 @@
+﻿<table class="admin table table-striped">
+@if (PagedData != null && !PagedData.Items.IsNullOrEmpty())
+{
+    <thead>
+        <tr>
+            <th class="text-right">#</th>
+            <th>Image</th>
+            <th>Name</th>
+            <th class="text-right">Price</th>
+            <th>Category</th>
+            <th class="text-right">Quantity</th>
+            <th class="text-center">Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in PagedData.Items)
+        {
+        <tr>
+            <td class="text-right">@item.Id</td>
+            <td><img src="/pictures/@item.ImagePath" alt="Preview" style="max-width:50px; max-height:50px;" /></td>
+            <td><NavLink href="@($"/admin/products/{item.Id}")">@item.Name</NavLink></td>
+            <td class="text-right">@item.Price.ToString("#,##0.00") €</td>
+            <td>@item.CategoryName</td>
+            <td class="text-right">@item.Quantity</td>
+            <td class="text-center"><NavLink href="@($"/admin/products/{item.Id}/delete")"><i class="fa fa-trash-o" aria-hidden="true"></i></NavLink></td>
+        </tr>
+        }
+    </tbody>
+}
+else
+{
+    <thead>
+        <tr>
+            <th class="text-center">No Data</th>
+        </tr>
+    </thead>
+}
+</table>
+
+@code {
+    [Parameter, EditorRequired]
+    public ProductListModelPagedResult PagedData { get; set; }
+
+
+}

@@ -1,0 +1,64 @@
+﻿@page "/admin/orders/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+<div class="container-fluid">
+    <div class="row">
+        <AdminHeader />
+    </div>
+    <div class="row">
+        @if (isAdmin)
+        {
+        <div class="col-md-2">
+            <AdminNav />
+        </div>
+        <div class="col-md-10">
+            <div class="row col-md-6" style="margin-top:1rem;">
+                <h3>Order Details</h3>
+                <NavLink href="/admin/orders" class="admin list-link">Orders List</NavLink>
+                    <AdminOrderForm Data="@orderData" />
+            </div>
+        </div>
+        }
+        else
+        {
+            <Unauthorized />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+    private OrderDetailsModel orderData = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    orderData = await httpClient.GetOrderAsync(id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+}

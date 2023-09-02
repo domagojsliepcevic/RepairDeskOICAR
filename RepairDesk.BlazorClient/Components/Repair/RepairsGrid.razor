@@ -1,0 +1,40 @@
+﻿<table class="admin table table-striped">
+    @if (PagedData != null && !PagedData.Items.IsNullOrEmpty())
+    {
+        <thead>
+            <tr>
+                <th class="text-right">#</th>
+                <th class="text-right">Request Date</th>
+                <th class="text-right">Finish Date</th>
+                <th>User</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in PagedData.Items)
+            {
+                <tr>
+                    <td class="text-right"><NavLink href="@($"/repairs/{item.Id}")">@item.Id</NavLink></td>
+                    <td class="text-right">@item.RequestDate.DateTime.ToString("dd-MM-yyyy")</td>
+                    <td class="text-right">@(item.FinishDate?.DateTime.ToString("dd-MM-yyyy") ?? "---")</td>
+                    <td>@item.User</td>
+                    <td>@item.Status</td>
+                </tr>
+            }
+        </tbody>
+    }
+    else
+    {
+        <thead>
+            <tr>
+                <th class="text-center">No Data</th>
+            </tr>
+        </thead>
+    }
+</table>
+
+@code {
+    [Parameter, EditorRequired]
+    public RepairListModelPagedResult PagedData { get; set; }
+
+}

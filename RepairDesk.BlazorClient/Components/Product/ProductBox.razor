@@ -1,0 +1,86 @@
+﻿@inject NavigationManager navMan
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+@if (Product != null)
+{
+	<div class="product">
+		<a href="/products/@Product.Id">
+			<div class="product-img">
+				<img src="/pictures/@Product.ImagePath" alt="">
+			</div>
+		</a>
+		<div class="product-body">
+			<p class="product-category">@Product.CategoryName</p>
+			<h3 class="product-name"><a href="/products">@Product.Name</a></h3>
+			<h4 class="product-price">@Product.Price.ToString("#,##0.00") €</h4>
+			<div class="product-rating">
+				@for(int i=0; i<Product.Rating; i++)
+				{
+				<i class="fa fa-star"></i>
+				}
+				@for (int i = Product.Rating; i < 5; i++)
+				{
+					<i class="fa fa-star-o"></i>
+				}
+			</div>
+		</div>
+		<div class="add-to-cart">
+			@if (principal?.Identity?.IsAuthenticated == true)
+			{
+				<button class="add-to-cart-btn" @onclick="AddToCart">
+					<i class="fa fa-shopping-cart"></i> add to cart
+				</button>
+			}
+			else
+			{
+			<button class="add-to-cart-btn" @onclick="Login">
+					<i class="fa fa-user-o"></i> login
+			</button>
+			}
+		</div>
+	</div>
+}
+
+@code {
+	[Parameter, EditorRequired]
+	public ProductListModel Product { get; set; }
+	private ClaimsPrincipal principal { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var authState = await authStateProvider.GetAuthenticationStateAsync();
+			principal = authState.User;
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+
+	private async Task AddToCart()
+	{
+		try
+		{
+			CartItemAddModel model = new CartItemAddModel()
+				{
+					ProductId = Product.Id,
+					Quantity = 1
+				};
+			var cidm = await httpClient.AddItemToCartAsync(model);
+			navMan.NavigateTo("/cart");
+		}
+		catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+	}
+
+	private void Login()
+	{
+		navMan.NavigateTo("/login");
+	}
+}

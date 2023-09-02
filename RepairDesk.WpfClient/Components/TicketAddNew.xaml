@@ -1,0 +1,69 @@
+﻿<UserControl x:Class="RepairDesk.WpfClient.Components.TicketAddNew"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RepairDesk.WpfClient.Components"
+             xmlns:converters="clr-namespace:RepairDesk.WpfClient.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="20">
+    <UserControl.Resources>
+        <converters:DateTimeOffsetToDateConverter x:Key="DateTimeOffsetToDateConverter" />
+    </UserControl.Resources>
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0" FontSize="40" FontStyle="Italic" FontWeight="Bold">
+            Add New Ticket
+        </TextBlock>
+
+        <Grid Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Request Date  -->
+            <TextBlock Grid.Row="0" Grid.Column="0" Width="200" Text="Request Date" TextAlignment="Right" Margin="5" />
+            <DatePicker x:Name="RequestDate" Grid.Row="0" Grid.Column="1" Margin="5" Width="400" 
+                        SelectedDate="{Binding Ticket.RequestDate, Converter={StaticResource DateTimeOffsetToDateConverter}}" />
+            <!-- Description   -->
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Description" TextAlignment="Right" Margin="5" />
+            <TextBox x:Name="Description" Grid.Row="1" Grid.Column="1" AcceptsReturn="True" TextWrapping="Wrap" Height="100" Margin="5" 
+                     Text="{Binding Ticket.Description}" />
+            <!-- User -->
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="User" TextAlignment="Right" Margin="5" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="5" 
+                      ItemsSource="{Binding Users}" SelectedValuePath="Id" SelectedItem="{Binding SelectedUser}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Email}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+
+            <!-- button -->
+            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
+                        Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Add New" Background="#D10024" Foreground="White" 
+                        Padding="5" FontWeight="Bold" Margin="5" 
+                        Click="AddNew_Click" />
+            </StackPanel>
+        </Grid>
+
+    </Grid>
+</UserControl>

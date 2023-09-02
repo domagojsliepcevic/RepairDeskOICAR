@@ -1,0 +1,68 @@
+﻿@page "/account"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+<MainHeader />
+<MainNavigation />
+<section class="section">
+	<div class="container">
+		<div class="row">
+			<aside id="aside" class="col-md-3">
+				<ProfileMenu />
+			</aside>
+			<div class="col-md-9">
+				<div>
+					<div class="section-title">
+						<h3 class="title">Personal Info</h3>
+					</div>
+                    <PersonalInfoBox Data="userData" User="user" OnSubmit="OnSubmit" />
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<MainFooter />
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private UserDetailsModel userData = null;
+    private UserEditModel user = new UserEditModel();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                userData = await httpClient.GetUserAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            userData = await httpClient.EditUserAsync(user);
+            toastService.ShowSuccess("success");
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+}

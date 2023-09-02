@@ -1,0 +1,49 @@
+﻿<EditForm Model="@POS" OnValidSubmit="@OnSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="id" class="h3"># <span>@POS.Id</span></label>
+    </div>
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" class="form-control" @bind-Value="POS.Name" />
+        <ValidationMessage For="@(() => POS.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="location">Location:</label>
+        <InputText id="location" class="form-control" @bind-Value="POS.Location" />
+        <ValidationMessage For="@(() => POS.Location)" />
+    </div>
+
+    <button type="submit" class=" primary-btn cta-btn">Save Changes</button>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public POSDetailsModel Data { get; set; }
+    [Parameter, EditorRequired]
+    public POSEditModel POS { get; set; }
+    [Parameter, EditorRequired]
+    public Func<Task> OnSubmit { get; set; }
+
+
+    protected override void OnParametersSet()
+    {
+        if (Data != null)
+        {
+            POS.Id = Data.Id;
+            POS.Name = Data.Name;
+            POS.Location = Data.Location;
+        }
+        else
+        {
+            POS.Id = 0;
+            POS.Name = "";
+            POS.Location = "";
+        }
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,200 @@
+﻿@page "/user/profile/details"
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+
+
+<h3>Profile Details</h3>
+
+<EditForm Model="user" OnValidSubmit="@OnSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="firstName">First Name:</label>
+        <InputText id="firstName" class="form-control" @bind-Value="user.FirstName" />
+        <ValidationMessage For="@(() => user.FirstName)" />
+    </div>
+
+    <div class="form-group">
+        <label for="lastName">Last Name:</label>
+        <InputText id="lastName" class="form-control" @bind-Value="user.LastName" />
+        <ValidationMessage For="@(() => user.LastName)" />
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <InputText id="email" class="form-control" @bind-Value="user.Email" />
+        <ValidationMessage For="@(() => user.Email)" />
+    </div>
+
+    <div class="form-group">
+        <label for="phoneNumber">Phone Number:</label>
+        <InputText id="phoneNumber" class="form-control" @bind-Value="user.PhoneNumber" />
+        <ValidationMessage For="@(() => user.PhoneNumber)" />
+    </div>
+
+    <div class="form-group">
+        <label for="address">Address:</label>
+        <InputText id="address" class="form-control" @bind-Value="user.Address" />
+        <ValidationMessage For="@(() => user.Address)" />
+    </div>
+
+    <div class="form-group">
+        <label for="city">City:</label>
+        <InputText id="city" class="form-control" @bind-Value="user.City" />
+        <ValidationMessage For="@(() => user.City)" />
+    </div>
+
+    <div class="form-group">
+        <label for="zipCode">Zip Code:</label>
+        <InputText id="zipCode" class="form-control" @bind-Value="user.ZipCode" />
+        <ValidationMessage For="@(() => user.ZipCode)" />
+    </div>
+
+    <div class="form-group">
+        <label for="country">Country:</label>
+        <InputText id="country" class="form-control" @bind-Value="user.Country" />
+        <ValidationMessage For="@(() => user.Country)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</EditForm>
+
+
+<p></p>
+<h3>Change Password</h3>
+
+<EditForm Model="password" OnValidSubmit="@OnPasswordSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="oldPassword">Old Password:</label>
+        <InputText id="oldPassword" type="password" class="form-control" @bind-Value="password.OldPassword" />
+        <ValidationMessage For="@(() => password.OldPassword)" />
+    </div>
+
+    <div class="form-group">
+        <label for="newPassword">New Password:</label>
+        <InputText id="newPassword" type="password" class="form-control" @bind-Value="password.NewPassword" />
+        <ValidationMessage For="@(() => password.NewPassword)" />
+    </div>
+
+    <div class="form-group">
+        <label for="confirmPassword">Confirm Password:</label>
+        <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="password.ConfirmNewPassword" />
+        <ValidationMessage For="@(() => password.ConfirmNewPassword)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Change</button>
+</EditForm>
+
+@code {
+    private UserEditModel user = new UserEditModel();
+    private PasswordModel password = new PasswordModel();
+    private ClaimsPrincipal principal { get; set; }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+            else
+            {
+                // load data
+                var data = await httpClient.GetUserAsync();
+                user.Id = data.Id;
+                user.FirstName = data.FirstName;
+                user.LastName = data.LastName;
+                user.Email = data.Email;
+                user.PhoneNumber = data.PhoneNumber;
+                user.Address = data.Address;
+                user.City = data.City;
+                user.ZipCode = data.ZipCode;
+                user.Country = data.Country;
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            await httpClient.EditUserAsync(user);
+            //if (data != null)
+            //{
+            //    // todo
+            //    GoBack();
+            //}
+            //else
+            //{
+            //    // todo
+            //}
+            toastService.ShowSuccess("success");
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnPasswordSubmit()
+    {
+        try
+        {
+            if (password.OldPassword == password.NewPassword)
+            {
+                toastService.ShowError("Old and new passwords are same.");
+
+                return;
+            }
+            if (password.NewPassword != password.ConfirmNewPassword)
+            {
+                toastService.ShowError("Passwords do not match.");
+
+                return;
+            }
+
+            var ucpm = new UserChangePasswordModel
+                {
+                    OldPassword = password.OldPassword,
+                    NewPassword = password.NewPassword
+                };
+
+            await httpClient.ChangePasswordAsync(ucpm);
+            password = new PasswordModel();
+            toastService.ShowSuccess("success");
+        }
+        catch(Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private class PasswordModel
+    {
+        [Required]
+        [DataType(DataType.Password)]
+        public string OldPassword { get; set; }
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string NewPassword { get; set; }
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string ConfirmNewPassword { get; set; }
+    }
+
+}

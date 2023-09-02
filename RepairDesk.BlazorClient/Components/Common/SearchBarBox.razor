@@ -1,0 +1,57 @@
+﻿@using System.Globalization;
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+@inject ProductSearchService searchService
+@inject NavigationManager navMan
+
+<div class="col-md-6">
+	<div class="header-search">
+        <EditForm Model="searchService" OnValidSubmit="Search">
+            <InputSelect @bind-Value="searchService.CategoryId" class="input-select">
+				<option value="0">All Categories</option>
+                @if (pagedResult != null && !pagedResult.Items.IsNullOrEmpty())
+                {
+                    foreach (var category in pagedResult.Items.Where(c => !c.IsSpecial))
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                        @*<option value="@category.Id" @(searchService.Category==category.Name ? "selected" : "")>@category.Name</option>*@                    }
+                }
+			</InputSelect>
+            <InputText @bind-Value="searchService.Text" class="input" placeholder="Search here" />
+            <button type="submit" class="search-btn">Search</button>
+		</EditForm>
+	</div>
+</div>
+
+@code {
+    private CategoryListModelPagedResult pagedResult;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPage(1);
+    }
+
+    private async Task LoadPage(int pageNumber)
+    {
+        try
+        {
+            pagedResult = await httpClient.GetCategoriesPageAsync(pageNumber);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void Search()
+    {
+        string categoryId = (searchService.CategoryId.HasValue && searchService.CategoryId > 0) ? searchService.CategoryId.Value.ToString() : "";
+        string brand = !string.IsNullOrWhiteSpace(searchService.Brand) ? Uri.EscapeDataString(searchService.Brand) : "";
+        string text = !string.IsNullOrWhiteSpace(searchService.Text) ? Uri.EscapeDataString(searchService.Text) : "";
+        string newUrl = $"/searchresults?categoryid={categoryId}&brand={brand}&text={text}";
+        searchService.PriceFrom = null;
+        searchService.PriceTo = null;
+
+        navMan.NavigateTo(newUrl);
+    }
+}

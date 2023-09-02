@@ -1,0 +1,97 @@
+﻿@page "/searchresults"
+@using System.Globalization;
+@implements IDisposable
+@inject ProductSearchService searchService
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+<MainHeader />
+<MainNavigation />
+@if (pagedResult != null)
+{
+    <section class="section">
+        <div class="container">
+            <div class="row col-md-12">
+                <h3>Search Results</h3>
+            </div>
+            <div class="row">
+                <aside id="aside" class="col-md-3">
+                    <FiltersSidebar />
+                </aside>
+                <div id="store" class="col-md-9">
+                    <ProductsGrid Products=pagedResult.Items />
+                </div>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <Loading />
+}
+<MainFooter />
+
+@code {
+    private ProductListModelPagedResult pagedResult = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        HandleSearchService(new Uri(navMan.Uri));
+        navMan.LocationChanged += HandleLocationChanged;
+        await LoadPage(1);
+    }
+
+    private async void HandleLocationChanged(object sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        var uri = new Uri(e.Location);
+        HandleSearchService(uri);
+        //var query = System.Web.HttpUtility.ParseQueryString(Uri.UnescapeDataString(uri.Query));
+        //searchService.CategoryId = (query.IfKeyAndValueExist("categoryid") && int.Parse(query["categoryid"])>0) ? int.Parse(query["categoryid"]) : null;
+        //searchService.Brand = query.IfKeyAndValueExist("brand") ? query["brand"] : null;
+        //searchService.Text = query.IfKeyAndValueExist("text") ? query["text"] : null;
+        //searchService.PriceFrom = query.IfKeyAndValueExist("pricefrom") ? decimal.Parse(query["pricefrom"], CultureInfo.InvariantCulture) : null;
+        //searchService.PriceTo = query.IfKeyAndValueExist("priceto") ? decimal.Parse(query["priceto"], CultureInfo.InvariantCulture) : null;
+
+        await LoadPage(1);
+
+        StateHasChanged();
+    }
+
+    private void HandleSearchService(Uri uri)
+    {
+        var query = System.Web.HttpUtility.ParseQueryString(Uri.UnescapeDataString(uri.Query));
+        searchService.CategoryId = (query.IfKeyAndValueExist("categoryid") && int.Parse(query["categoryid"]) > 0) ? int.Parse(query["categoryid"]) : null;
+        searchService.Brand = query.IfKeyAndValueExist("brand") ? query["brand"] : null;
+        searchService.Text = query.IfKeyAndValueExist("text") ? query["text"] : null;
+        searchService.PriceFrom = query.IfKeyAndValueExist("pricefrom") ? decimal.Parse(query["pricefrom"], CultureInfo.InvariantCulture) : null;
+        searchService.PriceTo = query.IfKeyAndValueExist("priceto") ? decimal.Parse(query["priceto"], CultureInfo.InvariantCulture) : null;
+
+    }
+
+    public void Dispose()
+    {
+        navMan.LocationChanged -= HandleLocationChanged;
+    }
+
+    private async Task LoadPage(int pageNumber)
+    {
+        try
+        {
+            var psm = new ProductSearchModel
+            {
+                CategoryId = searchService.CategoryId,
+                Brand = searchService.Brand,
+                Text = searchService.Text,
+                PriceFrom = searchService.PriceFrom,
+                PriceTo = searchService.PriceTo
+            };
+            pagedResult = await httpClient.SearchProductsAsync(pageNumber, psm);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+}

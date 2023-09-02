@@ -1,0 +1,56 @@
+﻿@page "/catalog/products/{id:int}"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+
+<h3>Product Details</h3>
+
+@if (Product == null)
+{
+    @if (loading)
+    {
+        <p>Loading...</p>
+    }
+    else if (notFound)
+    {
+        <p>not found</p>
+    }
+}
+else
+{
+    <p># @Product.Id</p>
+    <h4>@Product.Name</h4>
+    <p>Description: @Product.Description</p>
+    <p>Price: @Product.Price.ToString("C")</p>
+    <p>Category: @Product.CategoryName</p>
+}
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    public bool loading { get; set; } = true;
+    public bool notFound { get; set; } = false;
+
+    private ProductDetailsModel Product = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Product = await httpClient.GetProductAsync(id);
+            loading = false;
+            notFound = Product == null;
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void BackToList()
+    {
+        navMan.NavigateTo("/products/");
+    }
+
+}

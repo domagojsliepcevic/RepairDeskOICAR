@@ -1,0 +1,66 @@
+﻿@page "/user/account/close"
+@inject IRepairDeskApiClient httpClient
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject AuthenticationStateProvider authStateProvider
+
+
+<h3>Close Account</h3>
+
+<p>Please enter your password to confirm account closure:</p>
+
+<EditForm Model="model" OnValidSubmit="@OnSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" />
+        <ValidationMessage For="@(() => model.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-danger">Close Account</button>
+</EditForm>
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private CloseAccountModel model = new CloseAccountModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/user/login");
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            await httpClient.CloseAccountAsync(model);
+            model = new CloseAccountModel();
+            // todo
+            // Pozvati metodu za zatvaranje računa s closeAccountModel.Password
+            // Nakon uspješnog zatvaranja računa, odjaviti korisnika i redirektati ga na početnu stranicu
+            GoHome();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private void GoHome()
+    {
+        navMan.NavigateTo("/");
+    }
+}

@@ -1,0 +1,94 @@
+﻿@page "/catalog/products"
+@inject IRepairDeskApiClient httpClient
+@inject IToastService toastService
+
+<h3>Products</h3>
+
+@if (pagedResult == null)
+{
+    <p>Loading...</p>
+}
+else if (pagedResult.Items.IsNullOrEmpty())
+{
+    <p>No products found.</p>
+}
+else
+{
+    <div>
+        @foreach (var product in pagedResult.Items)
+        {
+            <div>
+                <h4>@product.Name</h4>
+                <p>@product.Description</p>
+                <p>@product.Price.ToString("C")</p>
+                <button @onclick="(() => AddToCart(product.Id))">Add to cart</button> 
+
+            </div>
+        }
+    </div>
+
+    <div class="pagination">
+        <button class="prev-btn" disabled="@IsFirstPage" @onclick="GoToPreviousPage">Previous</button>
+        <span class="page-info">Page @pagedResult.CurrentPage of @pagedResult.TotalPages</span>
+        <button class="next-btn" disabled="@IsLastPage" @onclick="GoToNextPage">Next</button>
+    </div>
+}
+
+@code {
+    private ProductListModelPagedResult pagedResult;
+    //private CartHeadModel cartHeadData;
+    private bool IsFirstPage => pagedResult.CurrentPage == 1;
+    private bool IsLastPage => pagedResult.CurrentPage == pagedResult.TotalPages;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPage(1);
+    }
+
+    private async Task AddToCart(int productId)
+    {
+        try
+        {
+            var ciam = new CartItemAddModel
+            {
+                ProductId = productId,
+                Quantity = 1,
+            };
+            var result = await httpClient.AddItemToCartAsync(ciam);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+
+    /* pagination */
+    private async Task LoadPage(int pageNumber)
+    {
+        try
+        {
+            pagedResult = await httpClient.GetProductsPageAsync(pageNumber);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            await LoadPage(pagedResult.CurrentPage - 1);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (!IsLastPage)
+        {
+            await LoadPage(pagedResult.CurrentPage + 1);
+        }
+    }
+}

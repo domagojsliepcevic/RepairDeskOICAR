@@ -1,0 +1,117 @@
+﻿@page "/checkout"
+@inject IRepairDeskApiClient httpClient
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject IConfiguration configuration
+
+<MainHeader />
+<MainNavigation />
+@if(pagedData == null || cartHeadData == null)
+{
+    <Loading />
+}
+else if(pagedData.Items.Count == 0)
+{
+	<div class="row col-md-12">
+		<h3>Your cart is empty</h3>
+	</div>
+}
+else
+{
+	<CheckoutBox CartItems="@pagedData.Items" CartHead="@cartHeadData" PlaceOrder="PlaceOrder" PaymentData="paymentData" />
+}
+<MainFooter />
+
+@code {
+	private ClaimsPrincipal principal { get; set; }
+	private PaymentData paymentData { get; set; } = new PaymentData();
+	private CartItemListModelPagedResult pagedData;
+	private CartHeadModel cartHeadData;
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var authState = await authStateProvider.GetAuthenticationStateAsync();
+			principal = authState.User;
+			if (!principal.Identity.IsAuthenticated)
+			{
+				navMan.NavigateTo("/login");
+			}
+			else
+			{
+				await LoadPage(1);
+			}
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+
+	private async Task LoadPage(int pageNumber)
+	{
+		try
+		{
+			pagedData = await httpClient.GetCartItemsPageAsync(pageNumber);
+			cartHeadData = await httpClient.GetCartHeadAsync();
+		}
+		catch (Exception ex)
+		{
+			toastService.ShowError(ex.Message);
+		}
+	}
+
+
+	private async Task PlaceOrder()
+	{
+		try
+		{
+			var paymentBaseUrl = configuration["Payment:BaseUrl"];
+			if (paymentData.PaymentMethod == "cod")
+			{
+				navMan.NavigateTo(paymentBaseUrl + "/payment/success");
+			}
+			else if (paymentData.PaymentMethod == "stripe")
+			{
+				// user data
+				var userData = await httpClient.GetUserAsync();
+				var options = new SessionCreateOptions
+					{
+						ClientReferenceId = userData.Id.ToString(),
+						CustomerEmail = userData.Email,
+						PaymentMethodTypes = new List<string> { "card" },
+						LineItems = new List<SessionLineItemOptions>
+						{
+							new SessionLineItemOptions
+							{
+								PriceData = new SessionLineItemPriceDataOptions
+								{
+									UnitAmount = Convert.ToInt64(cartHeadData.Total * 100),
+									Currency = "EUR",
+									ProductData = new SessionLineItemPriceDataProductDataOptions
+									{
+										Name = $"order for {userData.Id.ToString()}"
+									},
+								},
+								Quantity = 1,
+							},
+						},
+						Mode = "payment",
+						SuccessUrl = paymentBaseUrl + "/payment/success",
+						CancelUrl = paymentBaseUrl + "/payment/cancel"
+					};
+				var service = new SessionService();
+				Session session = service.Create(options);
+				//
+				navMan.NavigateTo(session.Url);
+			}
+		}
+        catch (Exception ex)
+        {
+			navMan.NavigateTo("/payment/failure");
+		}
+	}
+}

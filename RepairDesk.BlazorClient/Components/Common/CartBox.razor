@@ -1,0 +1,31 @@
+﻿@inject AuthenticationStateProvider authStateProvider
+@if (isLoggedIn)
+{
+<div class="header-ctn">
+    <div style="position: relative;">
+        <a href="/cart">
+                <i class="fa fa-shopping-cart" style="color:#D10024;"></i>
+            <span>Your Cart</span>
+        </a>
+    </div>
+</div>
+}
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private bool isLoggedIn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (principal.Identity.IsAuthenticated)
+            {
+                isLoggedIn = true;
+            }
+        }
+        catch {}
+    }
+}

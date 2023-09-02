@@ -1,0 +1,193 @@
+﻿@page "/cart"
+@inject IRepairDeskApiClient httpClient
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+@inject IToastService toastService
+
+<MainHeader />
+<MainNavigation />
+
+@if (pagedData == null || cartHeadData == null)
+{
+    <Loading />
+}
+else
+{
+    <section class="section">
+        <div class="container">
+            @if (!pagedData.Items.IsNullOrEmpty())
+            {
+                <div class="row mb-5">
+                    <form class="col-md-12" method="post">
+                        <div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Image</th>
+                                        <th>Product</th>
+                                        <th class="text-right">Price</th>
+                                        <th class="text-right">Quantity</th>
+                                        <th class="text-right">Total</th>
+                                        <th class="text-center">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in pagedData.Items)
+                                    {
+                                        <tr>
+                                            <td class="product-thumbnail text-center">
+                                                <img src="/pictures/@item.ProductImagePath" alt="Image" class="img-fluid" style="max-width:100px;">
+                                            </td>
+                                            <td>@item.ProductName</td>
+                                            <td class="text-right">@item.UnitPrice.ToString("#,##0.00") €</td>
+                                            <td class="text-right">
+                                                <input type="number" min="0" @bind="item.Quantity" class="text-right" style="max-width: 50px;">
+                                                </td>
+                                            <td class="text-right">@((item.UnitPrice * item.Quantity).ToString("#,##0.00")) €</td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-black btn-sm" 
+                                                    @onclick="(() => RemoveFromCart(item.ProductId))">
+                                                    <i class="fa fa-times" aria-hidden="true"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="row mb-5">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <button type="button" class="primary-btn cta-btn" @onclick="UpdateQuantities">Update Cart</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 pl-5">
+                        <div class="row" style="display: flex; justify-content: flex-end;">
+                            <div class="col-md-7">
+                                <div class="row">
+                                    <div class="col-md-12 text-right border-bottom mb-5">
+                                        <h3 class="text-black h4 text-uppercase">Cart Totals</h3>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <span class="text-black">Subtotal</span>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <strong class="text-black">@cartHeadData.Total.ToString("#,##0.00") €</strong>
+                                    </div>
+                                </div>
+                                <div class="row mb-5">
+                                    <div class="col-md-6">
+                                        <span class="text-black">Total</span>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <strong class="text-black">@cartHeadData.Total.ToString("#,##0.00") €</strong>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12" style="margin-top: 2rem;">
+                                        <a href="/checkout" class="primary-btn cta-btn">Proceed To Checkout</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row col-md-12">
+                    <h3>Your cart is empty.</h3>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+
+<MainFooter />
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private CartItemListModelPagedResult pagedData;
+    private CartHeadModel cartHeadData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                await LoadPage(1);
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task LoadPage(int pageNumber)
+    {
+        try
+        {
+            pagedData = await httpClient.GetCartItemsPageAsync(pageNumber);
+            cartHeadData = await httpClient.GetCartHeadAsync();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+
+    private async Task RemoveFromCart(int productId)
+    {
+        try
+        {
+            await httpClient.DeleteCartItemAsync(productId);
+            await LoadPage(pagedData.CurrentPage);
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+    private async Task UpdateQuantities()
+    {
+        try
+        {
+            foreach (var item in pagedData.Items)
+            {
+                var ciem = new CartItemEditModel
+                    {
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                    };
+                await httpClient.EditCartItemAsync(ciem);
+            }
+            await LoadPage(pagedData.CurrentPage);
+            toastService.ShowSuccess("success");
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+}
+

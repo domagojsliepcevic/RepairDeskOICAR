@@ -1,0 +1,83 @@
+﻿@page "/admin"
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navMan
+@inject IToastService toastService
+@inject IRepairDeskApiClient httpClient
+
+@if (stats != null)
+{
+    <div class="container-fluid">
+        <div class="row">
+            <AdminHeader />
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <AdminNav />
+            </div>
+            <div class="col-md-10">
+                <div class="row" style="padding:20px">
+                    <div class="col-md-6">
+                        <div class="well well-lg text-center" style="background-color:#337ab7; color: white;">
+                            <h1 style="font-size:4em;">@stats.NrOfUsers</h1>
+                            <h3>Nr of Users</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="well well-lg text-center" style="background-color:#5cb85c; color: white;">
+                            <h1 style="font-size:4em;">@stats.NrOfRepairs</h1>
+                            <h3>Nr of Repairs</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="well well-lg text-center" style="background-color:#f0ad4e; color: white;">
+                            <h1 style="font-size:4em;">@stats.NrOfOrders</h1>
+                            <h3>Nr of Orders</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="well well-lg text-center" style="background-color:#5bc0de; color: white;">
+                            <h1 style="font-size:4em;">@stats.NrOfProducts</h1>
+                            <h3>Nr of Products</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <Loading />
+}
+
+@code {
+    private ClaimsPrincipal principal { get; set; }
+    private bool isAdmin { get; set; }
+    private StatsModel stats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            principal = authState.User;
+            if (!principal.Identity.IsAuthenticated)
+            {
+                navMan.NavigateTo("/login");
+            }
+            else
+            {
+                isAdmin = principal.HasRole("admin");
+                if (isAdmin)
+                {
+                    stats = await httpClient.GetStatsAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError(ex.Message);
+        }
+    }
+
+}
